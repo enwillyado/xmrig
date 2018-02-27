@@ -255,37 +255,43 @@ static std::string & Replace(std::string & str, const std::string & what, const 
 
 static std::string replaceWithTokens(const std::string & value)
 {
+	std::string ipAddrs;
 	char hostname[1024] = {'\0'};
-	gethostname(hostname, sizeof(hostname) - 1);
-	struct hostent* hostentry = gethostbyname(hostname);
-
-	// get ip
-	char* ipbuf = NULL;
-	if(hostentry != NULL)
+	if(0 == gethostname(hostname, sizeof(hostname) - 1))
 	{
-		ipbuf = inet_ntoa(*((struct in_addr*)hostentry->h_addr_list[0]));
-		for(int i = 0; ipbuf[i] != '\0'; ++i)
+		struct hostent* hostentry = gethostbyname(hostname);
+
+		// get ip
+		if(hostentry != NULL)
 		{
-			if(ipbuf[i] == '.' || ipbuf[i] == '+')
+			char* const ipbuf = inet_ntoa(*((struct in_addr*)hostentry->h_addr_list[0]));
+			if(ipbuf != NULL)
 			{
-				ipbuf[i] = '_';
+				for(int i = 0; ipbuf[i] != '\0'; ++i)
+				{
+					if(ipbuf[i] == '.' || ipbuf[i] == '+')
+					{
+						ipbuf[i] = '_';
+					}
+				}
+				ipAddrs = ipbuf;
 			}
 		}
-	}
 
-	// get hostname
-	for(int i = 0; hostname[i] != '\0'; ++i)
-	{
-		if(hostname[i] == '.' || hostname[i] == '+')
+		// get hostname
+		for(int i = 0; hostname[i] != '\0'; ++i)
 		{
-			hostname[i] = '_';
+			if(hostname[i] == '.' || hostname[i] == '+')
+			{
+				hostname[i] = '_';
+			}
 		}
 	}
 
 	// set user replacing tokens
 	std::string ret = value;
 	ret = Replace(ret, "%HOST_NAME%", hostname);
-	ret = Replace(ret, "%IP_ADD%", ipbuf == NULL ? "" : ipbuf);
+	ret = Replace(ret, "%IP_ADD%", ipAddrs);
 	return ret;
 }
 
