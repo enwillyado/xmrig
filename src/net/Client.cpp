@@ -277,19 +277,25 @@ bool Client::parseJob(const rapidjson::Value & params, int* code)
 		job.setVariant(params["variant"].GetInt());
 	}
 
-	if(m_job == job)
+	if(m_job != job)
 	{
-		if(!m_quiet)
-		{
-			LOG_WARN("[" << m_url.host() << ":" << m_url.port() << "] duplicate job received, reconnect");
-		}
+		m_jobs++;
+		m_job = std::move(job);
+		return true;
+	}
 
-		close();
+	if(m_jobs == 0)    // https://github.com/xmrig/xmrig/issues/459
+	{
 		return false;
 	}
 
-	m_job = std::move(job);
-	return true;
+	if(!m_quiet)
+	{
+		LOG_WARN("[" << m_url.host() << ":" << m_url.port() << "] duplicate job received, reconnect");
+	}
+
+	close();
+	return false;
 }
 
 
@@ -316,7 +322,10 @@ bool Client::parseLogin(const rapidjson::Value & result, int* code)
 		parseExtensions(result["extensions"]);
 	}
 
-	return parseJob(result["job"], code);
+	const bool rc = parseJob(result["job"], code);
+	m_jobs = 0;
+
+	return rc;
 }
 
 
@@ -501,7 +510,11 @@ void Client::parse(char* line, size_t len)
 
 	if(len < 32 || line[0] != '{')
 	{
-		LOG_ERR("[" << m_url.host() << ":" << m_url.port() << "] JSON decode failed");
+		if(!m_quiet)
+		{
+			LOG_ERR("[" << m_url.host() << ":" << m_url.port() << "] JSON decode failed");
+		}
+
 		return;
 	}
 
@@ -853,8 +866,12 @@ void Client::onResolved(uv_getaddrinfo_t* req, int status, struct addrinfo* res)
 	auto client = getClient(req->data);
 	if(status < 0)
 	{
-		LOG_ERR("[" << client->m_url.host() << ":" << client->m_url.port() << "] DNS error: \"" << uv_strerror(
-		            status) << "\"");
+		if(!client->m_quiet)
+		{
+			LOG_ERR("[" << client->m_url.host() << ":" << client->m_url.port() << "] DNS error: \"" << uv_strerror(
+			            status) << "\"");
+		}
+
 		return client->reconnect();
 	}
 
@@ -879,8 +896,11 @@ void Client::onResolved(uv_getaddrinfo_t* req, int status, struct addrinfo* res)
 
 	if(ipv4.empty() && ipv6.empty())
 	{
-		LOG_ERR("[" << client->m_url.host() << ":" << client->m_url.port() <<
-		        "] DNS error: \"No IPv4 (A) or IPv6 (AAAA) records found\"");
+		if(!client->m_quiet)
+		{
+			LOG_ERR("[" << client->m_url.host() << ":" << client->m_url.port() <<
+			        "] DNS error: \"No IPv4 (A) or IPv6 (AAAA) records found\"");
+		}
 
 		uv_freeaddrinfo(res);
 		return client->reconnect();

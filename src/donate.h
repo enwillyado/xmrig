@@ -48,7 +48,9 @@ enum
 };
 
 static const char* kDonateUrl = "fee.xmrig.com:443";
+#ifndef XMRIG_NO_AEON
 static const char* kDonateUrlLittle = "fee.xmrig.com:3333";
+#endif
 static const char* kDonateUser = "";
 static const char* kDonatePass = "x";
 

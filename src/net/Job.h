@@ -125,6 +125,7 @@ public:
 	static void toHex(const std::string & in, char* out);
 
 	bool operator==(const Job & other) const;
+	bool operator!=(const Job & other) const;
 
 private:
 	bool m_nicehash;

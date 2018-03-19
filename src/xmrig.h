@@ -29,7 +29,9 @@ namespace xmrig
 	enum Algo
 	{
 		ALGO_CRYPTONIGHT,      /* CryptoNight (Monero) */
+#ifndef XMRIG_NO_AEON
 		ALGO_CRYPTONIGHT_LITE, /* CryptoNight-Lite (AEON) */
+#endif
 	};
 
 	enum Variant

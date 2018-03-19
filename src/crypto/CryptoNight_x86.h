@@ -49,35 +49,35 @@ extern "C"
 }
 
 
-static inline void do_blake_hash(const void* input, size_t len, char* output)
+static inline void do_blake_hash(const uint8_t* input, size_t len, uint8_t* output)
 {
-	blake256_hash(reinterpret_cast<uint8_t*>(output), static_cast<const uint8_t*>(input), len);
+	blake256_hash(output, input, len);
 }
 
 
-static inline void do_groestl_hash(const void* input, size_t len, char* output)
+static inline void do_groestl_hash(const uint8_t* input, size_t len, uint8_t* output)
 {
-	groestl(static_cast<const uint8_t*>(input), len * 8, reinterpret_cast<uint8_t*>(output));
+	groestl(input, len * 8, output);
 }
 
 
-static inline void do_jh_hash(const void* input, size_t len, char* output)
+static inline void do_jh_hash(const uint8_t* input, size_t len, uint8_t* output)
 {
-	jh_hash(32 * 8, static_cast<const uint8_t*>(input), 8 * len, reinterpret_cast<uint8_t*>(output));
+	jh_hash(32 * 8, input, 8 * len, output);
 }
 
 
-static inline void do_skein_hash(const void* input, size_t len, char* output)
+static inline void do_skein_hash(const uint8_t* input, size_t len, uint8_t* output)
 {
-	xmr_skein(static_cast<const uint8_t*>(input), reinterpret_cast<uint8_t*>(output));
+	xmr_skein(input, output);
 }
 
 
-void (* const extra_hashes[4])(const void*, size_t, char*) = {do_blake_hash, do_groestl_hash, do_jh_hash, do_skein_hash};
+void (* const extra_hashes[4])(const uint8_t*, size_t, uint8_t*) = {do_blake_hash, do_groestl_hash, do_jh_hash, do_skein_hash};
 
 
 
-#if (defined(__x86_64__) || defined(_M_AMD64)) && __cplusplus > 199711L
+#if defined(__x86_64__) || defined(_M_AMD64)
 #   define EXTRACT64(X) _mm_cvtsi128_si64(X)
 
 #   ifdef __GNUC__
@@ -90,7 +90,7 @@ static inline uint64_t __umul128(uint64_t a, uint64_t b, uint64_t* hi)
 #   else
 #define __umul128 _umul128
 #   endif
-#elif defined(__i386__) || defined(_M_IX86) || __cplusplus <= 199711L
+#elif defined(__i386__) || defined(_M_IX86)
 #   define HI32(X) \
 	_mm_srli_si128((X), 4)
 
@@ -331,10 +331,10 @@ static inline __m128i _mm_set_epi64x(const uint64_t __a, const uint64_t __b)
 #endif
 
 template<size_t ITERATIONS, size_t MEM, size_t MASK, bool SOFT_AES, int VARIANT>
-inline void cryptonight_single_hash(const void* __restrict__ input, size_t size, void* __restrict__ output,
-                                    cryptonight_ctx* __restrict__ ctx)
+inline void cryptonight_single_hash(const uint8_t* __restrict__ input, size_t size,
+                                    uint8_t* __restrict__ output, cryptonight_ctx* __restrict__ ctx)
 {
-	keccak(static_cast<const uint8_t*>(input), (int) size, ctx->state0, 200);
+	keccak(input, (int) size, ctx->state0, 200);
 
 	VARIANT1_INIT(0);
 
@@ -390,16 +390,16 @@ inline void cryptonight_single_hash(const void* __restrict__ input, size_t size,
 	cn_implode_scratchpad<MEM, SOFT_AES>((__m128i*) ctx->memory, (__m128i*) ctx->state0);
 
 	keccakf(h0, 24);
-	extra_hashes[ctx->state0[0] & 3](ctx->state0, 200, static_cast<char*>(output));
+	extra_hashes[ctx->state0[0] & 3](ctx->state0, 200, output);
 }
 
 
 template<size_t ITERATIONS, size_t MEM, size_t MASK, bool SOFT_AES, int VARIANT>
-inline void cryptonight_double_hash(const void* __restrict__ input, size_t size, void* __restrict__ output,
-                                    struct cryptonight_ctx* __restrict__ ctx)
+inline void cryptonight_double_hash(const uint8_t* __restrict__ input, size_t size,
+                                    uint8_t* __restrict__ output, struct cryptonight_ctx* __restrict__ ctx)
 {
-	keccak((const uint8_t*) input, (int) size, ctx->state0, 200);
-	keccak((const uint8_t*) input + size, (int) size, ctx->state1, 200);
+	keccak(input, (int) size, ctx->state0, 200);
+	keccak(input + size, (int) size, ctx->state1, 200);
 
 	VARIANT1_INIT(0);
 	VARIANT1_INIT(1);
@@ -442,7 +442,6 @@ inline void cryptonight_double_hash(const void* __restrict__ input, size_t size,
 
 		_mm_store_si128((__m128i*) &l0[idx0 & MASK], _mm_xor_si128(bx0, cx0));
 		_mm_store_si128((__m128i*) &l1[idx1 & MASK], _mm_xor_si128(bx1, cx1));
-
 		VARIANT1_1(&l0[idx0 & MASK]);
 		VARIANT1_1(&l1[idx1 & MASK]);
 
@@ -492,8 +491,8 @@ inline void cryptonight_double_hash(const void* __restrict__ input, size_t size,
 	keccakf(h0, 24);
 	keccakf(h1, 24);
 
-	extra_hashes[ctx->state0[0] & 3](ctx->state0, 200, static_cast<char*>(output));
-	extra_hashes[ctx->state1[0] & 3](ctx->state1, 200, static_cast<char*>(output) + 32);
+	extra_hashes[ctx->state0[0] & 3](ctx->state0, 200, output);
+	extra_hashes[ctx->state1[0] & 3](ctx->state1, 200, output + 32);
 }
 
 #endif /* __CRYPTONIGHT_X86_H__ */

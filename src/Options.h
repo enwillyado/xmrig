@@ -53,7 +53,9 @@ public:
 	{
 	public:
 		std::string m_url;
+#ifndef XMRIG_NO_AEON
 		std::string m_url_little;
+#endif
 		std::string m_user;
 		std::string m_pass;
 		bool m_keepAlive;

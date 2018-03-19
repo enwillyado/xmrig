@@ -59,45 +59,44 @@
 Options* Options::m_self = nullptr;
 
 
-static char const usage[] = "\
-Usage: " APP_ID " [OPTIONS]\n\
-Options:\n\
-  -a, --algo=ALGO          cryptonight (default) or cryptonight-lite\n\
-  -o, --url=URL            URL of mining server\n\
-  -O, --userpass=U:P       username:password pair for mining server\n\
-  -u, --user=USERNAME      username for mining server\n\
-  -p, --pass=PASSWORD      password for mining server\n\
-  -t, --threads=N          number of miner threads\n\
-  -v, --av=N               algorithm variation, 0 auto select\n\
-  -k, --keepalive          send keepalived for prevent timeout (need pool support)\n\
-  -r, --retries=N          number of times to retry before switch to backup server (default: 5)\n\
-  -R, --retry-pause=N      time to pause between retries (default: 5)\n\
-      --cpu-affinity       set process affinity to CPU core(s), mask 0x3 for cores 0 and 1\n\
-      --cpu-priority       set process priority (0 idle, 2 normal to 5 highest)\n\
-      --no-huge-pages      disable huge pages support\n\
-      --no-color           disable colored output\n\
-      --donate-level=N     donate level, default 5%% (5 minutes in 100 minutes)\n\
-      --user-agent         set custom user-agent string for pool\n\
-	  --donate-level=N     donate level, default 2%%\n\
-  -B, --background         run the miner in the background\n\
-  -c, --config=FILE        load a JSON-format configuration file\n\
-  -l, --log-file=FILE      log all output to a file\n"
-# ifdef HAVE_SYSLOG_H
-                            "\
-  -S, --syslog             use system log for output messages\n"
-# endif
-                            "\
-      --max-cpu-usage=N    maximum CPU usage for automatic threads mode (default 75)\n\
-      --safe               safe adjust threads and av settings for current CPU\n\
-      --nicehash           enable nicehash/xmrig-proxy support\n\
-      --print-time=N       print hashrate report every N seconds\n\
-      --api-port=N         port for the miner API\n\
-      --api-access-token=T access token for API\n\
-      --api-worker-id=ID   custom worker-id for API\n\
-  -h, --help               display this help and exit\n\
-  -V, --version            output version information and exit\n\
-";
-
+static char const usage[] = "Usage: \" APP_ID [OPTIONS]\"" "\n"
+                            "Options: " "\n"
+#ifndef XMRIG_NO_AEON
+                            "  -a, --algo=ALGO          cryptonight (default) or cryptonight-lite\n"
+#else
+                            "  -a, --algo=ALGO          cryptonight (only)\n"
+#endif
+                            "-o, --url=URL            URL of mining server" "\n"
+                            "-O, --userpass=U:P       username:password pair for mining server" "\n"
+                            "-u, --user=USERNAME      username for mining server" "\n"
+                            "-p, --pass=PASSWORD      password for mining server" "\n"
+                            "-t, --threads=N          number of miner threads" "\n"
+                            "-v, --av=N               algorithm variation, 0 auto select" "\n"
+                            "-k, --keepalive          send keepalived for prevent timeout (need pool support)" "\n"
+                            "-r, --retries=N          number of times to retry before switch to backup server (default: 5)" "\n"
+                            "-R, --retry-pause=N      time to pause between retries (default: 5)" "\n"
+                            "    --cpu-affinity       set process affinity to CPU core(s), mask 0x3 for cores 0 and 1" "\n"
+                            "    --cpu-priority       set process priority (0 idle, 2 normal to 5 highest)" "\n"
+                            "    --no-huge-pages      disable huge pages support" "\n"
+                            "    --no-color           disable colored output" "\n"
+                            "    --donate-level=N     donate level, default 5%% (5 minutes in 100 minutes)" "\n"
+                            "    --user-agent         set custom user-agent string for pool" "\n"
+                            "  --donate-level=N     donate level, default 2%%" "\n"
+                            "-B, --background         run the miner in the background" "\n"
+                            "-c, --config=FILE        load a JSON-format configuration file" "\n"
+                            "-l, --log-file=FILE      log all output to a file" "\n"
+#ifdef HAVE_SYSLOG_H
+                            "-S, --syslog             use system log for output messages" "\n"
+#endif
+                            "    --max-cpu-usage=N    maximum CPU usage for automatic threads mode (default 75)" "\n"
+                            "    --safe               safe adjust threads and av settings for current CPU" "\n"
+                            "    --nicehash           enable nicehash/xmrig-proxy support" "\n"
+                            "    --print-time=N       print hashrate report every N seconds" "\n"
+                            "    --api-port=N         port for the miner API" "\n"
+                            "    --api-access-token=T access token for API" "\n"
+                            "    --api-worker-id=ID   custom worker-id for API" "\n"
+                            "-h, --help               display this help and exit" "\n"
+                            "-V, --version            output version information and exit";
 
 static char const short_options[] = "a:c:khBp:Px:r:R:s:t:T:o:u:O:v:Vl:S";
 
@@ -137,7 +136,9 @@ static struct option const options[] =
 	{ "verbose",          0, nullptr, 1100 },
 	{ "version",          0, nullptr, 'V'  },
 	{ "donate-url",          required_argument, nullptr, 1391 },
+#ifndef XMRIG_NO_AEON
 	{ "donate-url-little",   required_argument, nullptr, 1392 },
+#endif
 	{ "donate-user",         required_argument, nullptr, 1393 },
 	{ "donate-pass",         required_argument, nullptr, 1394 },
 	{ "donate-userpass",     required_argument, nullptr, 1395 },
@@ -177,7 +178,9 @@ static struct option const config_options[] =
 static struct option const donate_options[] =
 {
 	{ "donate-url",          required_argument, nullptr, 1391 },
+#ifndef XMRIG_NO_AEON
 	{ "donate-url-little",   required_argument, nullptr, 1392 },
+#endif
 	{ "donate-user",         required_argument, nullptr, 1393 },
 	{ "donate-pass",         required_argument, nullptr, 1394 },
 	{ "donate-userpass",     required_argument, nullptr, 1395 },
@@ -265,7 +268,9 @@ Options::Options(int argc, char** argv) :
 	m_affinity(-1L)
 {
 	m_donateOpt.m_url = kDonateUrl;
+#ifndef XMRIG_NO_AEON
 	m_donateOpt.m_url_little = kDonateUrlLittle;
+#endif
 	m_donateOpt.m_user = kDonateUser;
 	m_donateOpt.m_pass = kDonatePass;
 	m_donateOpt.m_keepAlive = kDonateKeepAlive;
@@ -463,9 +468,13 @@ bool Options::parseArg(int key, const std::string & arg)
 	case 1391: //donate-url
 		m_donateOpt.m_url = arg;
 		break;
+
+#ifndef XMRIG_NO_AEON
 	case 1392: //donate-url-little
 		m_donateOpt.m_url_little = arg;
 		break;
+#endif
+
 	case 1393: //donate-user
 		m_donateOpt.m_user = arg;
 		break;
@@ -711,7 +720,9 @@ bool Options::parseBoolean(int key, bool enable)
 		break;
 
 	case 1391: //donate-url
+#ifndef XMRIG_NO_AEON
 	case 1392: //donate-url-little
+#endif
 	case 1393: //donate-user
 	case 1394: //donate-pass
 	case 1395: //donate-userpass

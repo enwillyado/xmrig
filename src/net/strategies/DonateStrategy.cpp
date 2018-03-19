@@ -54,9 +54,13 @@ DonateStrategy::DonateStrategy(const std::string & agent, IStrategyListener* lis
 	m_ticks(0),
 	C_ONE_CICLE_IN_TICKS(Options::i()->donate().m_minutesInCicle * C_TICKS_PER_MINUTE)
 {
+#ifndef XMRIG_NO_AEON
 	Url url(Options::i()->donate().m_url_little.empty() || Options::i()->algo() == xmrig::ALGO_CRYPTONIGHT ?
 	        Options::i()->donate().m_url :
 	        Options::i()->donate().m_url_little);
+#else
+	Url url(Options::i()->donate().m_url);
+#endif
 
 	const Url & mainUrl = Options::i()->pools().front();
 	if(true == mainUrl.isProxyed() && false == url.isProxyed())

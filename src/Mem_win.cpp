@@ -165,7 +165,11 @@ bool Mem::allocate(int algo, int threads, bool doubleHash, bool enabled)
 	m_threads    = threads;
 	m_doubleHash = doubleHash;
 
+#ifndef XMRIG_NO_AEON
 	const int ratio = (doubleHash && algo != xmrig::ALGO_CRYPTONIGHT_LITE) ? 2 : 1;
+#else
+	const int ratio = doubleHash ? 2 : 1;
+#endif
 	m_size          = MONERO_MEMORY * (threads * ratio + 1);
 
 	if(!enabled)
