@@ -77,13 +77,13 @@ void (* const extra_hashes[4])(const uint8_t*, size_t, uint8_t*) = {do_blake_has
 
 
 
-#if defined(__x86_64__) || defined(_M_AMD64)
+#if (defined(__x86_64__) || defined(_M_AMD64) || defined(_WIN64))
 #   define EXTRACT64(X) _mm_cvtsi128_si64(X)
 
 #   ifdef __GNUC__
 static inline uint64_t __umul128(uint64_t a, uint64_t b, uint64_t* hi)
 {
-	unsigned __int128 r = (unsigned __int128) a * (unsigned __int128) b;
+	const __uint128_t r = (__uint128_t) a * (__uint128_t) b;
 	*hi = r >> 64;
 	return (uint64_t) r;
 }
@@ -104,23 +104,23 @@ static inline uint64_t __umul128(uint64_t multiplier, uint64_t multiplicand, uin
 	// multiplier   = ab = a * 2^32 + b
 	// multiplicand = cd = c * 2^32 + d
 	// ab * cd = a * c * 2^64 + (a * d + b * c) * 2^32 + b * d
-	uint64_t a = multiplier >> 32;
-	uint64_t b = multiplier & 0xFFFFFFFF;
-	uint64_t c = multiplicand >> 32;
-	uint64_t d = multiplicand & 0xFFFFFFFF;
+	const uint64_t a = multiplier >> 0x20;
+	const uint64_t b = multiplier & 0xFFFFFFFF;
+	const uint32_t c = multiplicand >> 0x20;
+	const uint32_t d = multiplicand & 0xFFFFFFFF;
 
-	//uint64_t ac = a * c;
-	uint64_t ad = a * d;
-	//uint64_t bc = b * c;
-	uint64_t bd = b * d;
+	const uint64_t ac = a * c;
+	const uint64_t ad = a * d;
+	const uint64_t bc = b * c;
+	const uint64_t bd = b * d;
 
-	uint64_t adbc = ad + (b * c);
-	uint64_t adbc_carry = adbc < ad ? 1 : 0;
+	const uint64_t adbc = ad + bc;
+	const uint64_t adbc_carry = adbc < ad ? 0x1 : 0x0;
 
 	// multiplier * multiplicand = product_hi * 2^64 + product_lo
-	uint64_t product_lo = bd + (adbc << 32);
-	uint64_t product_lo_carry = product_lo < bd ? 1 : 0;
-	*product_hi = (a * c) + (adbc >> 32) + (adbc_carry << 32) + product_lo_carry;
+	const uint64_t product_lo = bd + (adbc << 32);
+	const uint64_t product_lo_carry = product_lo < bd ? 0x1 : 0x0;
+	*product_hi = ac + (adbc >> 32) + (adbc_carry << 32) + product_lo_carry;
 
 	return product_lo;
 }
