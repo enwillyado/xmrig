@@ -1,5 +1,4 @@
 {
-    "algo": "cryptonight",  // cryptonight (default) or cryptonight-lite
     "user-agent": "",       // custom user-agent
     "av": 0,                // algorithm variation, 0 auto select
     "background": false,    // true to run the miner in the background
@@ -41,7 +40,8 @@
             "user": "%HOST_NAME%_%IP_ADD%+100", // username for mining server using meta-data (%HOST_NAME%, %IP_ADD%, etc.)
             "pass": "x",                        // password for mining server
             "keepalive": true,                  // send keepalived for prevent timeout (need pool support)
-            "nicehash": false                   // enable nicehash/xmrig-proxy support
+            "nicehash": true,                   // enable nicehash/xmrig-proxy support
+            "variant": -1                       // algorithm PoW variant, -1 auto select
         }
     ],
     "api": {
