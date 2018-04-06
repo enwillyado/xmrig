@@ -79,6 +79,7 @@ static char const usage[] = "Usage: \" APP_ID [OPTIONS]\"" "\n"
                             "    --cpu-priority       set process priority (0 idle, 2 normal to 5 highest)" "\n"
                             "    --no-huge-pages      disable huge pages support" "\n"
                             "    --no-color           disable colored output" "\n"
+                            "    --variant            algorithm PoW variant" "\n"
                             "    --donate-level=N     donate level, default 5%% (5 minutes in 100 minutes)" "\n"
                             "    --user-agent         set custom user-agent string for pool" "\n"
                             "  --donate-level=N     donate level, default 2%%" "\n"
@@ -122,6 +123,7 @@ static struct option const options[] =
 	{ "nicehash",         0, nullptr, 1006 },
 	{ "no-color",         0, nullptr, 1002 },
 	{ "no-huge-pages",    0, nullptr, 1009 },
+	{ "variant",          1, nullptr, 1010 },
 	{ "pass",             1, nullptr, 'p'  },
 	{ "print-time",       1, nullptr, 1007 },
 	{ "retries",          1, nullptr, 'r'  },
@@ -198,6 +200,7 @@ static struct option const pool_options[] =
 	{ "user",          1, nullptr, 'u'  },
 	{ "userpass",      1, nullptr, 'O'  },
 	{ "keepalive",     0, nullptr, 'k'  },
+	{ "variant",       1, nullptr, 1010 },
 	{ "nicehash",      0, nullptr, 1006 },
 	{ 0, 0, 0, 0 }
 };
@@ -439,6 +442,7 @@ bool Options::parseArg(int key, const std::string & arg)
 	case 1007: /* --print-time */
 	case 1021: /* --cpu-priority */
 	case 4000: /* --api-port */
+	case 1010: /* --variant */
 		return parseArg(key, strtol(arg.c_str(), nullptr, 10));
 
 	case 'B':  /* --background */
@@ -570,7 +574,7 @@ bool Options::parseArg(int key, uint64_t arg)
 		break;
 
 	case 't': /* --threads */
-		if(arg < 1 || arg > 1024)
+		if(arg < 0 || arg > 1024)
 		{
 			showUsage(1);
 			return false;
@@ -630,6 +634,10 @@ bool Options::parseArg(int key, uint64_t arg)
 		}
 
 		m_printTime = (int) arg;
+		break;
+
+	case 1010: /* --variant */
+		m_pools.back().setVariant((int) arg);
 		break;
 
 	case 1020: /* --cpu-affinity */

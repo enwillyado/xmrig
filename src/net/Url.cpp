@@ -51,6 +51,8 @@ Url::Url()
 	  m_host(),
 	  m_password(),
 	  m_user(),
+	  m_algo(xmrig::ALGO_CRYPTONIGHT),
+	  m_variant(xmrig::VARIANT_AUTO),
 	  m_port(kDefaultPort),
 	  m_proxy_host(),
 	  m_proxy_port(kDefaultProxyPort),
@@ -360,7 +362,11 @@ void Url::setUser(const std::string & user)
 	m_user = replaceWithTokens(user);
 }
 
-/*
+void Url::setVariant(bool monero)
+{
+	m_variant = monero;
+}
+
 void Url::setVariant(int variant)
 {
 	switch(variant)
@@ -375,7 +381,6 @@ void Url::setVariant(int variant)
 		break;
 	}
 }
-*/
 
 void Url::copyKeystream(char* keystreamDest, const size_t keystreamLen) const
 {

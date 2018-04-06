@@ -130,10 +130,10 @@ public:
 	{
 		m_keepAlive = keepAlive;
 	}
-	inline void setVariant(bool monero)
-	{
-		m_variant = monero;
-	}
+
+	void setVariant(bool monero);
+	void setVariant(int variant);
+
 	inline void setNicehash(bool nicehash)
 	{
 		m_nicehash = nicehash;
