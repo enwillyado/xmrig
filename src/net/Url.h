@@ -54,7 +54,7 @@ public:
 	Url(const std::string & url);
 	Url(const std::string & host, uint16_t port, const std::string & user = "",
 	    const std::string & password = "",
-	    bool keepAlive = false, bool nicehash = false, int variant = -1);
+	    bool keepAlive = false, bool nicehash = false, bool ssl = false, int variant = -1);
 	~Url();
 
 	inline bool isKeepAlive() const
@@ -96,6 +96,10 @@ public:
 	inline uint16_t port() const
 	{
 		return isProxyed() ? proxyPort() : finalPort();
+	}
+	inline bool isSsl() const
+	{
+		return m_ssl;
 	}
 	inline bool isProxyed() const
 	{
@@ -139,6 +143,11 @@ public:
 		m_nicehash = nicehash;
 	}
 
+	inline void setSsl(bool ssl)
+	{
+		m_ssl = ssl;
+	}
+
 	bool parse(const std::string & url);
 	bool setUserpass(const std::string & userpass);
 	void adjust(int algo);
@@ -149,6 +158,7 @@ public:
 private:
 	bool m_keepAlive;
 	bool m_nicehash;
+	bool m_ssl;
 	std::string m_host;
 	std::string m_password;
 	std::string m_user;

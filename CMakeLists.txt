@@ -13,6 +13,9 @@ include (cmake/cpu.cmake)
 set(HEADERS
 
     src/3rdparty/align.h
+    src/3rdparty/libuv-tls/evt_tls.h
+    src/3rdparty/libuv-tls/uv_tls.h
+    src/3rdparty/libuv-tls/queue.h
     src/api/Api.h
     src/api/ApiState.h
     src/api/NetworkState.h
@@ -102,6 +105,8 @@ set(SOURCES
     src/workers/Worker.cpp
     src/workers/Workers.cpp
     src/xmrig.cpp
+    src/3rdparty/libuv-tls/evt_tls.c
+    src/3rdparty/libuv-tls/uv_tls.c
    )
 
 set(SOURCES_CRYPTO
@@ -139,7 +144,7 @@ else()
         src/Platform_unix.cpp
         )
 
-    set(EXTRA_LIBS pthread rt)
+    set(EXTRA_LIBS ssl crypto pthread rt dl pthread)
 endif()
 
 if (CMAKE_SYSTEM_NAME STREQUAL FreeBSD)
@@ -155,7 +160,7 @@ endif()
 
 add_definitions(/D__STDC_FORMAT_MACROS)
 add_definitions(/DUNICODE)
-#add_definitions(/DAPP_DEBUG)
+add_definitions(/DAPP_DEBUG)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 

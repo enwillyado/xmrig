@@ -27,6 +27,7 @@
 #include <string.h>
 #include <utility>
 
+#include <assert.h>
 
 #include "interfaces/IClientListener.h"
 #include "log/Log.h"
@@ -384,16 +385,44 @@ int64_t Client::send(size_t size, const bool encrypted)
 
 	uv_buf_t buf = uv_buf_init(m_sendBuf, (unsigned int) size);
 
-	if(uv_try_write(m_stream, &buf, 1) < 0)
+	if(m_url.isSsl())
 	{
-		close();
-		return -1;
+		uv_buf_t dcrypted;
+		dcrypted.base = m_sendBuf;
+		dcrypted.len = size;
+		uv_tls_write(m_tls, &dcrypted, Client::onWriteTls);
+	}
+	else
+	{
+		if(uv_try_write(m_stream, &buf, 1) < 0)
+		{
+			close();
+			return -1;
+		}
 	}
 
 	m_expire = uv_now(uv_default_loop()) + kResponseTimeout;
 	return m_sequence++;
 }
 
+void Client::onWriteTls(uv_tls_t* utls, int status)
+{
+	if(status == -1)
+	{
+		fprintf(stderr, "error on_write");
+		return;
+	}
+
+	uv_tls_read(utls, Client::onReadTls);
+}
+
+void Client::onReadTls(uv_tls_t* strm, ssize_t nrd, const uv_buf_t* buf)
+{
+	uv_tcp_t* socket = (uv_tcp_t*)strm->tcp_hdl->read_req.data;
+	auto client = getClientFromSocket(socket);
+	client->m_recvBuf = *buf;
+	client->processRead(nrd, buf);
+}
 
 void Client::connect(const std::vector<addrinfo*> & ipv4, const std::vector<addrinfo*> & ipv6)
 {
@@ -435,7 +464,18 @@ void Client::connect(struct sockaddr* addr)
 	uv_tcp_keepalive(m_socket, 1, 60);
 #endif
 
-	uv_tcp_connect(req, m_socket, reinterpret_cast<const sockaddr*>(addr), Client::onConnect);
+	if(m_url.isSsl())
+	{
+		evt_ctx_init_ex(&ctx, "server-cert.pem", "server-key.pem");
+		evt_ctx_set_nio(&ctx, NULL, uv_tls_writer);
+		m_socket->data = this;
+		getClientFromSocket(m_socket) = this;
+		uv_tcp_connect(req, m_socket, reinterpret_cast<const sockaddr*>(addr), Client::onConnect);
+	}
+	else
+	{
+		uv_tcp_connect(req, m_socket, reinterpret_cast<const sockaddr*>(addr), Client::onConnect);
+	}
 }
 
 void Client::prelogin()
@@ -754,84 +794,134 @@ void Client::onClose(uv_handle_t* handle)
 void Client::onConnect(uv_connect_t* req, int status)
 {
 	auto client = getClient(req->data);
+	client->processConnect(req, status);
+}
+
+void Client::processConnect(uv_connect_t* req, int status)
+{
 	if(status < 0)
 	{
-		if(!client->m_quiet)
+		if(!m_quiet)
 		{
-			LOG_ERR("[" << client->m_url.host() << ":" << client->m_url.port() << "] connect error: \"" << uv_strerror(
+			LOG_ERR("[" << m_url.host() << ":" << m_url.port() << "] connect error: \"" << uv_strerror(
 			            status) << "\"");
 		}
 
 		delete req;
-		client->close();
+		close();
 		return;
 	}
 
-	client->m_stream = static_cast<uv_stream_t*>(req->handle);
-	client->m_stream->data = req->data;
+	m_stream = static_cast<uv_stream_t*>(req->handle);
+	m_stream->data = req->data;
 
-	uv_read_start(client->m_stream, Client::onAllocBuffer, Client::onRead);
-	delete req;
+	if(m_url.isSsl())
+	{
+		uv_tcp_t* tcp = (uv_tcp_t*)req->handle;
 
-	client->prelogin();
+		//free on uv_tls_close
+		uv_tls_t* sclient = new uv_tls_t;
+		if(uv_tls_init(&ctx, tcp, sclient) < 0)
+		{
+			free(sclient);
+			return;
+		}
+		assert(tcp->data == sclient);
+		uv_tls_connect(sclient, Client::onHandshake);
+	}
+	else
+	{
+		m_stream = static_cast<uv_stream_t*>(req->handle);
+		m_stream->data = req->data;
+
+		uv_read_start(m_stream, Client::onAllocBuffer, Client::onRead);
+		delete req;
+
+		prelogin();
+	}
 }
 
+void Client::onHandshake(uv_tls_t* tls, int status)
+{
+	assert(tls->tcp_hdl->data == tls);
+	uv_tcp_t* socket = (uv_tcp_t*)tls->tcp_hdl->read_req.data;
+	auto client = getClientFromSocket(socket);
+	client->m_tls = tls;
+	client->processHandhake(status);
+}
+
+void Client::processHandhake(int status)
+{
+	if(0 == status)    // TLS connection not failed
+	{
+		prelogin();
+	}
+	else
+	{
+		uv_tls_close(m_tls, (uv_tls_close_cb)free);
+	}
+}
 
 void Client::onRead(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
 {
 	auto client = getClient(stream->data);
+	client->processRead(nread, buf);
+}
+
+void Client::processRead(ssize_t nread, const uv_buf_t* buf)
+{
 	if(nread < 0)
 	{
-		if(nread != UV_EOF && !client->m_quiet)
+		if(nread != UV_EOF && m_quiet)
 		{
-			LOG_ERR("[" << client->m_url.host() << ":" << client->m_url.port() << "] read error: \"" << uv_strerror((
+			LOG_ERR("[" << m_url.host() << ":" << m_url.port() << "] read error: \"" << uv_strerror((
 			            int) nread) << "\"");
 		}
 
-		client->close();
+		close();
 		return;
 	}
 
-	if((size_t) nread > (sizeof(Buf) - 8 - client->m_recvBufPos))
+	if((size_t) nread > (sizeof(Buf) - 8 - m_recvBufPos))
 	{
-		client->close();
+		close();
 		return;
 	}
 
-	if(client->state() == ProxingState)
+	if(state() == ProxingState)
 	{
 		const char* const content = buf->base;
-		LOG_DEBUG("[" << client->m_url.host() << ":" << client->m_url.port() << "] received from proxy (" << nread <<
+		LOG_DEBUG("[" << m_url.host() << ":" << m_url.port() << "] received from proxy (" << nread <<
 		          " bytes): \"" << content << "\"");
 
 		if(content == strstr(content, "HTTP/1.1 200"))
 		{
-			LOG_INFO("[" << client->m_url.host() << ":" << client->m_url.port() << "] Proxy connected to " <<
-			         client->m_url.finalHost() << ":" << client->m_url.finalPort() << "!");
-			client->setState(ConnectedState);
-			client->login();
+			LOG_INFO("[" << m_url.host() << ":" << m_url.port() << "] Proxy connected to " <<
+			         m_url.finalHost() << ":" << m_url.finalPort() << "!");
+			setState(ConnectedState);
+			login();
 		}
 		return;
 	}
 
-	client->m_recvBufPos += nread;
+	m_recvBufPos += nread;
 
 	char* end;
-	char* start = client->m_recvBuf.base;
-	size_t remaining = client->m_recvBufPos;
+	char* start = m_recvBuf.base;
+	size_t remaining = m_recvBufPos;
 
-	if(client->m_encrypted)
+	if(m_encrypted)
 	{
 		char* read_encr_hex = static_cast<char*>(malloc(nread * 2 + 1));
 		memset(read_encr_hex, 0, nread * 2 + 1);
 		Job::toHex(std::string(start, nread), read_encr_hex);
-		LOG_DEBUG("[" <<  client->m_ip << "] read encr. (" << nread << "  bytes): \"0x" << read_encr_hex << "\"");
+		LOG_DEBUG("[" <<  m_ip << "] read encr. (" << nread << "  bytes): \"0x" << read_encr_hex << "\"");
 		free(read_encr_hex);
 
 		// DeEncrypt
 		for(int i = 0; i < (int)nread; ++i)
 		{
-			start[i] ^= client->m_keystream[i];
+			start[i] ^= m_keystream[i];
 		}
 	}
 
@@ -839,7 +929,7 @@ void Client::onRead(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
 	{
 		end++;
 		size_t len = end - start;
-		client->parse(start, len);
+		parse(start, len);
 
 		remaining -= len;
 		start = end;
@@ -847,17 +937,17 @@ void Client::onRead(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
 
 	if(remaining == 0)
 	{
-		client->m_recvBufPos = 0;
+		m_recvBufPos = 0;
 		return;
 	}
 
-	if(start == client->m_recvBuf.base)
+	if(start == m_recvBuf.base)
 	{
 		return;
 	}
 
-	memcpy(client->m_recvBuf.base, start, remaining);
-	client->m_recvBufPos = remaining;
+	memcpy(m_recvBuf.base, start, remaining);
+	m_recvBufPos = remaining;
 }
 
 

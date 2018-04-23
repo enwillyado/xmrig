@@ -51,7 +51,7 @@ static void print_versions()
 #   endif
 
 
-	PRINT_MSG(" * VERSIONS:     XMRig/" << APP_VERSION << " libuv/" << uv_version_string() << buf);
+	PRINT_MSG(" * VERSIONS:     " APP_NAME "/" << APP_VERSION << " libuv/" << uv_version_string() << buf);
 }
 
 

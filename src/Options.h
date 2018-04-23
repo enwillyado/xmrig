@@ -60,6 +60,7 @@ public:
 		std::string m_pass;
 		bool m_keepAlive;
 		bool m_niceHash;
+		bool m_ssl;
 		unsigned short m_donateMinutes;
 		unsigned short m_minutesInCicle;
 	};

@@ -29,6 +29,7 @@
 #include <map>
 #include <uv.h>
 
+#include "libuv-tls/uv_tls.h"
 
 #include "net/Job.h"
 #include "net/SubmitResult.h"
@@ -131,16 +132,29 @@ private:
 	void setState(SocketState state);
 	void startTimeout();
 
+	void processConnect(uv_connect_t* req, int status);
+	void processHandhake(int status);
+	void processRead(ssize_t nread, const uv_buf_t* buf);
+
 	static void onAllocBuffer(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf);
 	static void onClose(uv_handle_t* handle);
 	static void onConnect(uv_connect_t* req, int status);
 	static void onTimeout(uv_timer_t* handle);
+	static void onHandshake(uv_tls_t* tls, int status);
 	static void onRead(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
+	static void onWriteTls(uv_tls_t* utls, int status);
+	static void onReadTls(uv_tls_t* strm, ssize_t nrd, const uv_buf_t* bfr);
 	static void onResolved(uv_getaddrinfo_t* req, int status, struct addrinfo* res);
 
 	static inline Client* getClient(void* data)
 	{
 		return static_cast<Client*>(data);
+	}
+
+	static inline Client* & getClientFromSocket(uv_tcp_t* socket)
+	{
+		static std::map<uv_tcp_t*, Client*> m;
+		return m[socket];
 	}
 
 	typedef char Buf[2048];
@@ -173,6 +187,9 @@ private:
 	uv_stream_t* m_stream;
 	uv_tcp_t* m_socket;
 	xmrig::Id m_rpcId;
+
+	evt_ctx_t ctx;
+	uv_tls_t* m_tls;
 
 #ifndef XMRIG_PROXY_PROJECT
 	uv_timer_t m_keepAliveTimer;

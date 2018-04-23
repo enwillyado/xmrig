@@ -48,6 +48,7 @@
 Url::Url()
 	: m_keepAlive(false),
 	  m_nicehash(false),
+	  m_ssl(false),
 	  m_host(),
 	  m_password(),
 	  m_user(),
@@ -63,6 +64,7 @@ Url::Url()
 Url::Url(const std::string & url)
 	: m_keepAlive(false),
 	  m_nicehash(false),
+	  m_ssl(false),
 	  m_host(),
 	  m_password(),
 	  m_user(),
@@ -81,10 +83,12 @@ Url::Url(const std::string & host,
          const std::string & user,
          const std::string & password,
          bool keepAlive,
+         bool ssl,
          bool nicehash,
          int variant)
 	: m_keepAlive(keepAlive),
 	  m_nicehash(nicehash),
+	  m_ssl(ssl),
 	  m_host(host),
 	  m_password(password),
 	  m_user(user),

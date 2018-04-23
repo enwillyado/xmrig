@@ -76,6 +76,12 @@
     <Filter Include="Archivos de encabezado\3rdparty\libcpuid">
       <UniqueIdentifier>{0bb34178-3f97-4639-8287-bea499f4f027}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Archivos de código fuente\3rdparty\libuv-tls">
+      <UniqueIdentifier>{359c8a99-d084-4b90-9e68-e5b50d31efdc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Archivos de encabezado\3rdparty\libuv-tls">
+      <UniqueIdentifier>{026a21c2-a3d8-4039-8dec-26fb2a416f8a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\3rdparty\libcpuid\asm-bits.c">
@@ -245,6 +251,12 @@
     </ClCompile>
     <ClCompile Include="..\src\workers\Workers.cpp">
       <Filter>Archivos de código fuente\workers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\3rdparty\libuv-tls\evt_tls.cc">
+      <Filter>Archivos de código fuente\3rdparty\libuv-tls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\3rdparty\libuv-tls\uv_tls.cc">
+      <Filter>Archivos de código fuente\3rdparty\libuv-tls</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -572,6 +584,15 @@
     </ClInclude>
     <ClInclude Include="..\src\net\Id.h">
       <Filter>Archivos de encabezado\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\3rdparty\libuv-tls\evt_tls.h">
+      <Filter>Archivos de encabezado\3rdparty\libuv-tls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\3rdparty\libuv-tls\queue.h">
+      <Filter>Archivos de encabezado\3rdparty\libuv-tls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\3rdparty\libuv-tls\uv_tls.h">
+      <Filter>Archivos de encabezado\3rdparty\libuv-tls</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

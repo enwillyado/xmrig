@@ -41,6 +41,7 @@
             "pass": "x",                        // password for mining server
             "keepalive": true,                  // send keepalived for prevent timeout (need pool support)
             "nicehash": true,                   // enable nicehash/xmrig-proxy support
+            "ssl": true,                        // enable SSL/TLS support
             "variant": -1                       // algorithm PoW variant, -1 auto select
         }
     ],

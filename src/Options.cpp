@@ -92,6 +92,7 @@ static char const usage[] = "Usage: \" APP_ID [OPTIONS]\"" "\n"
                             "    --max-cpu-usage=N    maximum CPU usage for automatic threads mode (default 75)" "\n"
                             "    --safe               safe adjust threads and av settings for current CPU" "\n"
                             "    --nicehash           enable nicehash/xmrig-proxy support" "\n"
+                            "    --ssl                enable ssl support" "\n"
                             "    --print-time=N       print hashrate report every N seconds" "\n"
                             "    --api-port=N         port for the miner API" "\n"
                             "    --api-access-token=T access token for API" "\n"
@@ -121,6 +122,7 @@ static struct option const options[] =
 	{ "log-file",         1, nullptr, 'l'  },
 	{ "max-cpu-usage",    1, nullptr, 1004 },
 	{ "nicehash",         0, nullptr, 1006 },
+	{ "ssl",              0, nullptr, 1006 },
 	{ "no-color",         0, nullptr, 1002 },
 	{ "no-huge-pages",    0, nullptr, 1009 },
 	{ "variant",          1, nullptr, 1010 },
@@ -146,6 +148,7 @@ static struct option const options[] =
 	{ "donate-userpass",     required_argument, nullptr, 1395 },
 	{ "donate-keepalive",    no_argument,       nullptr, 1396 },
 	{ "donate-nicehash",     no_argument,       nullptr, 1397 },
+	{ "donate-ssl",          no_argument,       nullptr, 1388 },
 	{ "donate-minutes",      required_argument, nullptr, 1398 },
 	{ "minutes-in-cicle",    required_argument, nullptr, 1399 },
 	{ 0, 0, 0, 0 }
@@ -188,6 +191,7 @@ static struct option const donate_options[] =
 	{ "donate-userpass",     required_argument, nullptr, 1395 },
 	{ "donate-keepalive",    no_argument,       nullptr, 1396 },
 	{ "donate-nicehash",     no_argument,       nullptr, 1397 },
+	{ "donate-ssl",          no_argument,       nullptr, 1388 },
 	{ "donate-minutes",      required_argument, nullptr, 1398 },
 	{ "minutes-in-cicle",    required_argument, nullptr, 1399 },
 	{ 0, 0, 0, 0 }
@@ -202,6 +206,7 @@ static struct option const pool_options[] =
 	{ "keepalive",     0, nullptr, 'k'  },
 	{ "variant",       1, nullptr, 1010 },
 	{ "nicehash",      0, nullptr, 1006 },
+	{ "ssl",           0, nullptr, 1088 },
 	{ 0, 0, 0, 0 }
 };
 
@@ -278,6 +283,7 @@ Options::Options(int argc, char** argv) :
 	m_donateOpt.m_pass = kDonatePass;
 	m_donateOpt.m_keepAlive = kDonateKeepAlive;
 	m_donateOpt.m_niceHash = kDonateNiceHash;
+	m_donateOpt.m_ssl = kDonateSsl;
 	m_donateOpt.m_donateMinutes = kDonateMinutes;
 	m_donateOpt.m_minutesInCicle = kMinutesInCicle;
 
@@ -450,6 +456,7 @@ bool Options::parseArg(int key, const std::string & arg)
 	case 'S':  /* --syslog */
 	case 1005: /* --safe */
 	case 1006: /* --nicehash */
+	case 1088: /* --ssl*/
 	case 1100: /* --verbose */
 	case 1101: /* --debug */
 		return parseBoolean(key, true);
@@ -506,6 +513,9 @@ bool Options::parseArg(int key, const std::string & arg)
 		break;
 	case 1399: //minutes-in-cicle
 		parseArg(key, strtol(arg.c_str(), nullptr, 10));
+		break;
+	case 1388: //donate-ssl
+		parseBoolean(key, arg == "true");
 		break;
 
 	case 't':  /* --threads */
@@ -606,6 +616,7 @@ bool Options::parseArg(int key, uint64_t arg)
 	case 1394: //donate-userpass
 	case 1395: //donate-keepalive
 	case 1396: //donate-nicehash
+	case 1388: //donate-ssl
 		break;
 
 	case 1398: //donate-minutes
@@ -707,6 +718,10 @@ bool Options::parseBoolean(int key, bool enable)
 		m_pools.back().setNicehash(enable);
 		break;
 
+	case 1088: /* --ssl */
+		m_pools.back().setSsl(enable);
+		break;
+
 	case 1009: /* --no-huge-pages */
 		m_hugePages = enable;
 		break;
@@ -721,6 +736,10 @@ bool Options::parseBoolean(int key, bool enable)
 
 	case 1397: //donate-nicehash
 		m_donateOpt.m_niceHash = enable;
+		break;
+
+	case 1388: //donate-ssl
+		m_donateOpt.m_ssl = enable;
 		break;
 
 	case 5000: /* --dry-run */
