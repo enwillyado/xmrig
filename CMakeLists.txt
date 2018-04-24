@@ -105,8 +105,8 @@ set(SOURCES
     src/workers/Worker.cpp
     src/workers/Workers.cpp
     src/xmrig.cpp
-    src/3rdparty/libuv-tls/evt_tls.c
-    src/3rdparty/libuv-tls/uv_tls.c
+    src/3rdparty/libuv-tls/evt_tls.cc
+    src/3rdparty/libuv-tls/uv_tls.cc
    )
 
 set(SOURCES_CRYPTO
@@ -160,7 +160,8 @@ endif()
 
 add_definitions(/D__STDC_FORMAT_MACROS)
 add_definitions(/DUNICODE)
-add_definitions(/DAPP_DEBUG)
+add_definitions(/DXMRIG_NO_SSL)
+#add_definitions(/DAPP_DEBUG)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
