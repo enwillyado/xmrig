@@ -97,10 +97,12 @@ public:
 	{
 		return isProxyed() ? proxyPort() : finalPort();
 	}
+#ifndef XMRIG_NO_SSL
 	inline bool isSsl() const
 	{
 		return m_ssl;
 	}
+#endif
 	inline bool isProxyed() const
 	{
 		return proxyHost().size() > 0;
@@ -143,10 +145,12 @@ public:
 		m_nicehash = nicehash;
 	}
 
+#ifndef XMRIG_NO_SSL
 	inline void setSsl(bool ssl)
 	{
 		m_ssl = ssl;
 	}
+#endif
 
 	bool parse(const std::string & url);
 	bool setUserpass(const std::string & userpass);
@@ -158,7 +162,9 @@ public:
 private:
 	bool m_keepAlive;
 	bool m_nicehash;
+#ifndef XMRIG_NO_SSL
 	bool m_ssl;
+#endif
 	std::string m_host;
 	std::string m_password;
 	std::string m_user;

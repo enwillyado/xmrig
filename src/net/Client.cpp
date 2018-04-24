@@ -66,11 +66,13 @@ Client::Client(int id, const std::string & agent, IClientListener* listener) :
 	m_recvBufPos(0),
 	m_state(UnconnectedState),
 	m_expire(0),
+#ifndef XMRIG_NO_SSL
+	m_ctx(),
+	m_tls(),
+#endif
 	m_req(),
 	m_stream(nullptr),
-	m_socket(),
-	m_ctx(),
-	m_tls()
+	m_socket()
 {
 	memset(&m_hints, 0, sizeof(m_hints));
 	memset(m_keystream, 0, sizeof(m_keystream));
@@ -387,6 +389,7 @@ int64_t Client::send(size_t size, const bool encrypted)
 
 	uv_buf_t buf = uv_buf_init(m_sendBuf, (unsigned int) size);
 
+#ifndef XMRIG_NO_SSL
 	if(m_url.isSsl())
 	{
 		uv_buf_t dcrypted;
@@ -395,6 +398,7 @@ int64_t Client::send(size_t size, const bool encrypted)
 		uv_tls_write(&m_tls, &dcrypted, Client::onWriteTls);
 	}
 	else
+#endif
 	{
 		if(uv_try_write(m_stream, &buf, 1) < 0)
 		{
@@ -407,6 +411,7 @@ int64_t Client::send(size_t size, const bool encrypted)
 	return m_sequence++;
 }
 
+#ifndef XMRIG_NO_SSL
 void Client::onWriteTls(uv_tls_t* utls, int status)
 {
 	if(status == -1)
@@ -425,6 +430,7 @@ void Client::onReadTls(uv_tls_t* strm, ssize_t nrd, const uv_buf_t* buf)
 	client->m_recvBuf = *buf;
 	client->processRead(nrd, buf);
 }
+#endif
 
 void Client::connect(const std::vector<addrinfo*> & ipv4, const std::vector<addrinfo*> & ipv6)
 {
@@ -462,17 +468,16 @@ void Client::connect(struct sockaddr* addr)
 	uv_tcp_keepalive(&m_socket, 1, 60);
 #endif
 
+#ifndef XMRIG_NO_SSL
 	if(m_url.isSsl())
 	{
-		evt_ctx_init_ex(&m_ctx, NULL, NULL);
+		evt_ctx_init_ex(&m_ctx, NULL, NULL); // TODO: use optative client certs
 		evt_ctx_set_nio(&m_ctx, NULL, uv_tls_writer);
 		getClientFromSocket(&m_socket) = this;
-		uv_tcp_connect(&m_req, &m_socket, reinterpret_cast<const sockaddr*>(addr), Client::onConnect);
 	}
-	else
-	{
-		uv_tcp_connect(&m_req, &m_socket, reinterpret_cast<const sockaddr*>(addr), Client::onConnect);
-	}
+#endif
+
+	uv_tcp_connect(&m_req, &m_socket, reinterpret_cast<const sockaddr*>(addr), Client::onConnect);
 }
 
 void Client::prelogin()
@@ -807,6 +812,7 @@ void Client::processConnect(uv_connect_t* req, int status)
 	m_stream = static_cast<uv_stream_t*>(req->handle);
 	m_stream->data = req->data;
 
+#ifndef XMRIG_NO_SSL
 	if(m_url.isSsl())
 	{
 		uv_tcp_t* tcp = (uv_tcp_t*)req->handle;
@@ -820,17 +826,18 @@ void Client::processConnect(uv_connect_t* req, int status)
 		uv_tls_connect(&m_tls, Client::onHandshake);
 	}
 	else
+#endif
 	{
 		m_stream = static_cast<uv_stream_t*>(req->handle);
 		m_stream->data = req->data;
 
 		uv_read_start(m_stream, Client::onAllocBuffer, Client::onRead);
-		delete req;
 
 		prelogin();
 	}
 }
 
+#ifndef XMRIG_NO_SSL
 void Client::onHandshake(uv_tls_t* tls, int status)
 {
 	assert(tls->tcp_hdl->data == tls);
@@ -850,6 +857,7 @@ void Client::processHandhake(int status)
 		uv_tls_close(&m_tls, (uv_tls_close_cb)free);
 	}
 }
+#endif
 
 void Client::onRead(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
 {

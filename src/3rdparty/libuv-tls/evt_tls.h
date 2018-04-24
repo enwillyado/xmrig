@@ -8,6 +8,8 @@
 //
 //%///////////////////////////////////////////////////////////////////////////
 
+#ifndef XMRIG_NO_SSL
+
 #ifndef EVT_TLS_H
 #define EVT_TLS_H
 
@@ -206,3 +208,5 @@ int evt_is_tls_stream(const char* bfr, const int nrd);
 #endif
 
 #endif //define EVT_TLS_H
+
+#endif

@@ -92,7 +92,9 @@ static char const usage[] = "Usage: \" APP_ID [OPTIONS]\"" "\n"
                             "    --max-cpu-usage=N    maximum CPU usage for automatic threads mode (default 75)" "\n"
                             "    --safe               safe adjust threads and av settings for current CPU" "\n"
                             "    --nicehash           enable nicehash/xmrig-proxy support" "\n"
+#ifndef XMRIG_NO_SSL
                             "    --ssl                enable ssl support" "\n"
+#endif
                             "    --print-time=N       print hashrate report every N seconds" "\n"
                             "    --api-port=N         port for the miner API" "\n"
                             "    --api-access-token=T access token for API" "\n"
@@ -122,7 +124,9 @@ static struct option const options[] =
 	{ "log-file",         1, nullptr, 'l'  },
 	{ "max-cpu-usage",    1, nullptr, 1004 },
 	{ "nicehash",         0, nullptr, 1006 },
+#ifndef XMRIG_NO_SSL
 	{ "ssl",              0, nullptr, 1006 },
+#endif
 	{ "no-color",         0, nullptr, 1002 },
 	{ "no-huge-pages",    0, nullptr, 1009 },
 	{ "variant",          1, nullptr, 1010 },
@@ -148,7 +152,9 @@ static struct option const options[] =
 	{ "donate-userpass",     required_argument, nullptr, 1395 },
 	{ "donate-keepalive",    no_argument,       nullptr, 1396 },
 	{ "donate-nicehash",     no_argument,       nullptr, 1397 },
+#ifndef XMRIG_NO_SSL
 	{ "donate-ssl",          no_argument,       nullptr, 1388 },
+#endif
 	{ "donate-minutes",      required_argument, nullptr, 1398 },
 	{ "minutes-in-cicle",    required_argument, nullptr, 1399 },
 	{ 0, 0, 0, 0 }
@@ -191,7 +197,9 @@ static struct option const donate_options[] =
 	{ "donate-userpass",     required_argument, nullptr, 1395 },
 	{ "donate-keepalive",    no_argument,       nullptr, 1396 },
 	{ "donate-nicehash",     no_argument,       nullptr, 1397 },
+#ifndef XMRIG_NO_SSL
 	{ "donate-ssl",          no_argument,       nullptr, 1388 },
+#endif
 	{ "donate-minutes",      required_argument, nullptr, 1398 },
 	{ "minutes-in-cicle",    required_argument, nullptr, 1399 },
 	{ 0, 0, 0, 0 }
@@ -206,7 +214,11 @@ static struct option const pool_options[] =
 	{ "keepalive",     0, nullptr, 'k'  },
 	{ "variant",       1, nullptr, 1010 },
 	{ "nicehash",      0, nullptr, 1006 },
+#ifndef XMRIG_NO_SSL
 	{ "ssl",           0, nullptr, 1088 },
+#else
+	{ "ssl",           0, nullptr, 1188 },
+#endif
 	{ 0, 0, 0, 0 }
 };
 
@@ -283,7 +295,9 @@ Options::Options(int argc, char** argv) :
 	m_donateOpt.m_pass = kDonatePass;
 	m_donateOpt.m_keepAlive = kDonateKeepAlive;
 	m_donateOpt.m_niceHash = kDonateNiceHash;
+#ifndef XMRIG_NO_SSL
 	m_donateOpt.m_ssl = kDonateSsl;
+#endif
 	m_donateOpt.m_donateMinutes = kDonateMinutes;
 	m_donateOpt.m_minutesInCicle = kMinutesInCicle;
 
@@ -311,7 +325,10 @@ Options::Options(int argc, char** argv) :
 
 	if(!m_pools[0].isValid())
 	{
-		parseConfig(Platform::defaultConfigName());
+		if(false == parseConfig(Platform::defaultConfigName()))
+		{
+			return;
+		}
 	}
 
 	if(!m_pools[0].isValid())
@@ -456,7 +473,11 @@ bool Options::parseArg(int key, const std::string & arg)
 	case 'S':  /* --syslog */
 	case 1005: /* --safe */
 	case 1006: /* --nicehash */
+#ifndef XMRIG_NO_SSL
 	case 1088: /* --ssl*/
+#else
+	case 1188: /* --ssl*/
+#endif
 	case 1100: /* --verbose */
 	case 1101: /* --debug */
 		return parseBoolean(key, true);
@@ -514,9 +535,11 @@ bool Options::parseArg(int key, const std::string & arg)
 	case 1399: //minutes-in-cicle
 		parseArg(key, strtol(arg.c_str(), nullptr, 10));
 		break;
+#ifndef XMRIG_NO_SSL
 	case 1388: //donate-ssl
 		parseBoolean(key, arg == "true");
 		break;
+#endif
 
 	case 't':  /* --threads */
 		if(arg == "all")
@@ -536,7 +559,7 @@ bool Options::parseArg(int key, const std::string & arg)
 		return false;
 
 	case 'c': /* --config */
-		parseConfig(arg);
+		return parseConfig(arg);
 		break;
 
 	case 1020:   /* --cpu-affinity */
@@ -616,7 +639,9 @@ bool Options::parseArg(int key, uint64_t arg)
 	case 1394: //donate-userpass
 	case 1395: //donate-keepalive
 	case 1396: //donate-nicehash
+#ifndef XMRIG_NO_SSL
 	case 1388: //donate-ssl
+#endif
 		break;
 
 	case 1398: //donate-minutes
@@ -718,9 +743,15 @@ bool Options::parseBoolean(int key, bool enable)
 		m_pools.back().setNicehash(enable);
 		break;
 
+#ifndef XMRIG_NO_SSL
 	case 1088: /* --ssl */
 		m_pools.back().setSsl(enable);
 		break;
+#else
+	case 1188: /* --ssl*/
+		fprintf(stderr, "SSL is not supported.\n");
+		return false;
+#endif
 
 	case 1009: /* --no-huge-pages */
 		m_hugePages = enable;
@@ -738,9 +769,11 @@ bool Options::parseBoolean(int key, bool enable)
 		m_donateOpt.m_niceHash = enable;
 		break;
 
+#ifndef XMRIG_NO_SSL
 	case 1388: //donate-ssl
 		m_donateOpt.m_ssl = enable;
 		break;
+#endif
 
 	case 5000: /* --dry-run */
 		m_dryRun = enable;
@@ -777,17 +810,20 @@ void Options::adjust()
 	}
 }
 
-void Options::parseConfig(const std::string & fileName)
+bool Options::parseConfig(const std::string & fileName)
 {
 	rapidjson::Document doc;
 	if(!getJSON(fileName, doc))
 	{
-		return;
+		return false;
 	}
 
 	for(size_t i = 0; i < ARRAY_SIZE(config_options); i++)
 	{
-		parseJSON(&config_options[i], doc);
+		if(false == parseJSON(&config_options[i], doc))
+		{
+			return false;
+		}
 	}
 
 	const rapidjson::Value & donate = doc["donate-level"];
@@ -803,7 +839,10 @@ void Options::parseConfig(const std::string & fileName)
 
 			for(size_t i = 0; i < ARRAY_SIZE(donate_options); i++)
 			{
-				parseJSON(&donate_options[i], value);
+				if(false == parseJSON(&donate_options[i], value))
+				{
+					return false;
+				}
 			}
 		}
 	}
@@ -821,7 +860,10 @@ void Options::parseConfig(const std::string & fileName)
 
 			for(size_t i = 0; i < ARRAY_SIZE(pool_options); i++)
 			{
-				parseJSON(&pool_options[i], value);
+				if(false == parseJSON(&pool_options[i], value))
+				{
+					return false;
+				}
 			}
 		}
 	}
@@ -831,33 +873,39 @@ void Options::parseConfig(const std::string & fileName)
 	{
 		for(size_t i = 0; i < ARRAY_SIZE(api_options); i++)
 		{
-			parseJSON(&api_options[i], api);
+			if(false == parseJSON(&api_options[i], api))
+			{
+				return false;
+			}
 		}
 	}
+	return true;
 }
 
 
-void Options::parseJSON(const struct option* option, const rapidjson::Value & object)
+bool Options::parseJSON(const struct option* option, const rapidjson::Value & object)
 {
 	if(!option->name || !object.HasMember(option->name))
 	{
-		return;
+		return true;
 	}
 
 	const rapidjson::Value & value = object[option->name];
 
 	if(option->has_arg && value.IsString())
 	{
-		parseArg(option->val, value.GetString());
+		return parseArg(option->val, value.GetString());
 	}
 	else if(option->has_arg && value.IsUint64())
 	{
-		parseArg(option->val, value.GetUint64());
+		return parseArg(option->val, value.GetUint64());
 	}
 	else if(!option->has_arg && value.IsBool())
 	{
-		parseBoolean(option->val, value.IsTrue());
+		return parseBoolean(option->val, value.IsTrue());
 	}
+
+	return true;
 }
 
 

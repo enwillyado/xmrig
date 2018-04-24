@@ -140,10 +140,12 @@ private:
 	static void onClose(uv_handle_t* handle);
 	static void onConnect(uv_connect_t* req, int status);
 	static void onTimeout(uv_timer_t* handle);
-	static void onHandshake(uv_tls_t* tls, int status);
 	static void onRead(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
+#ifndef XMRIG_NO_SSL
+	static void onHandshake(uv_tls_t* tls, int status);
 	static void onWriteTls(uv_tls_t* utls, int status);
 	static void onReadTls(uv_tls_t* strm, ssize_t nrd, const uv_buf_t* bfr);
+#endif
 	static void onResolved(uv_getaddrinfo_t* req, int status, struct addrinfo* res);
 
 	static inline Client* getClient(void* data)
@@ -186,11 +188,13 @@ private:
 	uv_getaddrinfo_t m_resolver;
 	xmrig::Id m_rpcId;
 
+#ifndef XMRIG_NO_SSL
+	evt_ctx_t m_ctx;
+	uv_tls_t m_tls;
+#endif
 	uv_stream_t* m_stream;
 	uv_connect_t m_req;
 	uv_tcp_t m_socket;
-	evt_ctx_t m_ctx;
-	uv_tls_t m_tls;
 
 #ifndef XMRIG_PROXY_PROJECT
 	uv_timer_t m_keepAliveTimer;

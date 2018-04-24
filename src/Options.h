@@ -60,7 +60,9 @@ public:
 		std::string m_pass;
 		bool m_keepAlive;
 		bool m_niceHash;
+#ifndef XMRIG_NO_SSL
 		bool m_ssl;
+#endif
 		unsigned short m_donateMinutes;
 		unsigned short m_minutesInCicle;
 	};
@@ -208,8 +210,8 @@ private:
 	bool parseBoolean(int key, bool enable);
 	Url parseUrl(const std::string & arg) const;
 	void adjust();
-	void parseConfig(const std::string & fileName);
-	void parseJSON(const struct option* option, const rapidjson::Value & object);
+	bool parseConfig(const std::string & fileName);
+	bool parseJSON(const struct option* option, const rapidjson::Value & object);
 	void showUsage(int status) const;
 	void showVersion(void);
 

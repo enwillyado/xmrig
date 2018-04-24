@@ -48,7 +48,9 @@
 Url::Url()
 	: m_keepAlive(false),
 	  m_nicehash(false),
+#ifndef XMRIG_NO_SSL
 	  m_ssl(false),
+#endif
 	  m_host(),
 	  m_password(),
 	  m_user(),
@@ -64,7 +66,9 @@ Url::Url()
 Url::Url(const std::string & url)
 	: m_keepAlive(false),
 	  m_nicehash(false),
+#ifndef XMRIG_NO_SSL
 	  m_ssl(false),
+#endif
 	  m_host(),
 	  m_password(),
 	  m_user(),
@@ -88,7 +92,9 @@ Url::Url(const std::string & host,
          int variant)
 	: m_keepAlive(keepAlive),
 	  m_nicehash(nicehash),
+#ifndef XMRIG_NO_SSL
 	  m_ssl(ssl),
+#endif
 	  m_host(host),
 	  m_password(password),
 	  m_user(user),
