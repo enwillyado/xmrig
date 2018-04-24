@@ -77,7 +77,7 @@ evt_tls_t* evt_ctx_get_tls(evt_ctx_t* d_eng)
 	}
 	memset((void*)con, 0, sizeof * con);
 
-	SSL* ssl  = SSL_new(d_eng->ctx);
+	SSL* ssl = SSL_new(d_eng->ctx);
 	if(!ssl)
 	{
 		free(con);
@@ -147,25 +147,41 @@ int evt_ctx_set_crt_key(evt_ctx_t* tls, const char* crtf, const char* key)
 {
 	SSL_CTX_set_verify(tls->ctx, SSL_VERIFY_NONE, NULL);
 
-	int r = SSL_CTX_use_certificate_file(tls->ctx, crtf, SSL_FILETYPE_PEM);
-	if(r != 1)
+	int r;
+	if(crtf != NULL)
 	{
-		return r;
+		r = SSL_CTX_use_certificate_file(tls->ctx, crtf, SSL_FILETYPE_PEM);
+		if(r != 1)
+		{
+			return r;
+		}
+		tls->cert_set = 1;
 	}
-	tls->cert_set = 1;
+	else
+	{
+		tls->cert_set = 0;
+	}
 
-	r = SSL_CTX_use_PrivateKey_file(tls->ctx, key, SSL_FILETYPE_PEM);
-	if(r != 1)
+	if(key != NULL)
 	{
-		return r;
+		r = SSL_CTX_use_PrivateKey_file(tls->ctx, key, SSL_FILETYPE_PEM);
+		if(r != 1)
+		{
+			return r;
+		}
+
+		r = SSL_CTX_check_private_key(tls->ctx);
+		if(r != 1)
+		{
+			return r;
+		}
+		tls->key_set = 1;
+	}
+	else
+	{
+		tls->key_set = 0;
 	}
 
-	r = SSL_CTX_check_private_key(tls->ctx);
-	if(r != 1)
-	{
-		return r;
-	}
-	tls->key_set = 1;
 	return 1;
 }
 

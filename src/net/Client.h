@@ -184,12 +184,13 @@ private:
 	Url m_url;
 	uv_buf_t m_recvBuf;
 	uv_getaddrinfo_t m_resolver;
-	uv_stream_t* m_stream;
-	uv_tcp_t* m_socket;
 	xmrig::Id m_rpcId;
 
-	evt_ctx_t ctx;
-	uv_tls_t* m_tls;
+	uv_stream_t* m_stream;
+	uv_connect_t m_req;
+	uv_tcp_t m_socket;
+	evt_ctx_t m_ctx;
+	uv_tls_t m_tls;
 
 #ifndef XMRIG_PROXY_PROJECT
 	uv_timer_t m_keepAliveTimer;

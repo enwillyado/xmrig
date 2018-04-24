@@ -66,8 +66,11 @@ Client::Client(int id, const std::string & agent, IClientListener* listener) :
 	m_recvBufPos(0),
 	m_state(UnconnectedState),
 	m_expire(0),
+	m_req(),
 	m_stream(nullptr),
-	m_socket(nullptr)
+	m_socket(),
+	m_ctx(),
+	m_tls()
 {
 	memset(&m_hints, 0, sizeof(m_hints));
 	memset(m_keystream, 0, sizeof(m_keystream));
@@ -90,7 +93,6 @@ Client::Client(int id, const std::string & agent, IClientListener* listener) :
 
 Client::~Client()
 {
-	delete m_socket;
 }
 
 
@@ -199,16 +201,16 @@ int64_t Client::submit(const JobResult & result)
 
 bool Client::close()
 {
-	if(m_state == UnconnectedState || m_state == ClosingState || !m_socket)
+	if(m_state == UnconnectedState || m_state == ClosingState || m_stream == nullptr || !uv_is_writable(m_stream))
 	{
 		return false;
 	}
 
 	setState(ClosingState);
 
-	if(uv_is_closing(reinterpret_cast<uv_handle_t*>(m_socket)) == 0)
+	if(uv_is_closing(reinterpret_cast<uv_handle_t*>(&m_socket)) == 0)
 	{
-		uv_close(reinterpret_cast<uv_handle_t*>(m_socket), Client::onClose);
+		uv_close(reinterpret_cast<uv_handle_t*>(&m_socket), Client::onClose);
 	}
 
 	return true;
@@ -390,7 +392,7 @@ int64_t Client::send(size_t size, const bool encrypted)
 		uv_buf_t dcrypted;
 		dcrypted.base = m_sendBuf;
 		dcrypted.len = size;
-		uv_tls_write(m_tls, &dcrypted, Client::onWriteTls);
+		uv_tls_write(&m_tls, &dcrypted, Client::onWriteTls);
 	}
 	else
 	{
@@ -449,32 +451,27 @@ void Client::connect(struct sockaddr* addr)
 	setState(ConnectingState);
 
 	reinterpret_cast<struct sockaddr_in*>(addr)->sin_port = htons(m_url.port());
-	delete m_socket;
 
-	uv_connect_t* req = new uv_connect_t;
-	req->data = this;
+	m_req.data = this;
+	m_socket.data = this;
 
-	m_socket = new uv_tcp_t;
-	m_socket->data = this;
-
-	uv_tcp_init(uv_default_loop(), m_socket);
-	uv_tcp_nodelay(m_socket, 1);
+	uv_tcp_init(uv_default_loop(), &m_socket);
+	uv_tcp_nodelay(&m_socket, 1);
 
 #ifndef WIN32
-	uv_tcp_keepalive(m_socket, 1, 60);
+	uv_tcp_keepalive(&m_socket, 1, 60);
 #endif
 
 	if(m_url.isSsl())
 	{
-		evt_ctx_init_ex(&ctx, "server-cert.pem", "server-key.pem");
-		evt_ctx_set_nio(&ctx, NULL, uv_tls_writer);
-		m_socket->data = this;
-		getClientFromSocket(m_socket) = this;
-		uv_tcp_connect(req, m_socket, reinterpret_cast<const sockaddr*>(addr), Client::onConnect);
+		evt_ctx_init_ex(&m_ctx, NULL, NULL);
+		evt_ctx_set_nio(&m_ctx, NULL, uv_tls_writer);
+		getClientFromSocket(&m_socket) = this;
+		uv_tcp_connect(&m_req, &m_socket, reinterpret_cast<const sockaddr*>(addr), Client::onConnect);
 	}
 	else
 	{
-		uv_tcp_connect(req, m_socket, reinterpret_cast<const sockaddr*>(addr), Client::onConnect);
+		uv_tcp_connect(&m_req, &m_socket, reinterpret_cast<const sockaddr*>(addr), Client::onConnect);
 	}
 }
 
@@ -781,12 +778,7 @@ void Client::onClose(uv_handle_t* handle)
 {
 	auto client = getClient(handle->data);
 
-	delete client->m_socket;
-
-	client->m_stream = nullptr;
-	client->m_socket = nullptr;
 	client->setState(UnconnectedState);
-
 	client->reconnect();
 }
 
@@ -820,14 +812,12 @@ void Client::processConnect(uv_connect_t* req, int status)
 		uv_tcp_t* tcp = (uv_tcp_t*)req->handle;
 
 		//free on uv_tls_close
-		uv_tls_t* sclient = new uv_tls_t;
-		if(uv_tls_init(&ctx, tcp, sclient) < 0)
+		if(uv_tls_init(&m_ctx, tcp, &m_tls) < 0)
 		{
-			free(sclient);
 			return;
 		}
-		assert(tcp->data == sclient);
-		uv_tls_connect(sclient, Client::onHandshake);
+		assert(tcp->data == &m_tls);
+		uv_tls_connect(&m_tls, Client::onHandshake);
 	}
 	else
 	{
@@ -846,7 +836,6 @@ void Client::onHandshake(uv_tls_t* tls, int status)
 	assert(tls->tcp_hdl->data == tls);
 	uv_tcp_t* socket = (uv_tcp_t*)tls->tcp_hdl->read_req.data;
 	auto client = getClientFromSocket(socket);
-	client->m_tls = tls;
 	client->processHandhake(status);
 }
 
@@ -858,7 +847,7 @@ void Client::processHandhake(int status)
 	}
 	else
 	{
-		uv_tls_close(m_tls, (uv_tls_close_cb)free);
+		uv_tls_close(&m_tls, (uv_tls_close_cb)free);
 	}
 }
 
