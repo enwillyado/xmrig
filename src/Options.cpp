@@ -93,7 +93,11 @@ static char const usage[] = "Usage: \" APP_ID [OPTIONS]\"" "\n"
                             "    --safe               safe adjust threads and av settings for current CPU" "\n"
                             "    --nicehash           enable nicehash/xmrig-proxy support" "\n"
 #ifndef XMRIG_NO_SSL
-                            "    --ssl                enable ssl support" "\n"
+                            "    --ssl                enable ssl over tcp" "\n"
+#endif
+#ifndef XMRIG_NO_UDP
+                            "    --udp                connect use udp" "\n"
+                            "    --udp-blind          listen on udp port" "\n"
 #endif
                             "    --print-time=N       print hashrate report every N seconds" "\n"
                             "    --api-port=N         port for the miner API" "\n"
@@ -125,7 +129,16 @@ static struct option const options[] =
 	{ "max-cpu-usage",    1, nullptr, 1004 },
 	{ "nicehash",         0, nullptr, 1006 },
 #ifndef XMRIG_NO_SSL
-	{ "ssl",              0, nullptr, 1006 },
+	{ "ssl",              0, nullptr, 1088 },
+#else
+	{ "ssl",              0, nullptr, 1188 },
+#endif
+#ifndef XMRIG_NO_UDP
+	{ "udp",              0, nullptr, 1089 },
+	{ "udp-blind",        0, nullptr, 1090 },
+#else
+	{ "udp",              0, nullptr, 1189 },
+	{ "udp-blind",        0, nullptr, 1190 },
 #endif
 	{ "no-color",         0, nullptr, 1002 },
 	{ "no-huge-pages",    0, nullptr, 1009 },
@@ -207,17 +220,24 @@ static struct option const donate_options[] =
 
 static struct option const pool_options[] =
 {
-	{ "url",           1, nullptr, 'o'  },
-	{ "pass",          1, nullptr, 'p'  },
-	{ "user",          1, nullptr, 'u'  },
-	{ "userpass",      1, nullptr, 'O'  },
-	{ "keepalive",     0, nullptr, 'k'  },
-	{ "variant",       1, nullptr, 1010 },
-	{ "nicehash",      0, nullptr, 1006 },
+	{ "url",           required_argument, nullptr, 'o'  },
+	{ "pass",          required_argument, nullptr, 'p'  },
+	{ "user",          required_argument, nullptr, 'u'  },
+	{ "userpass",      required_argument, nullptr, 'O'  },
+	{ "keepalive",     no_argument,       nullptr, 'k'  },
+	{ "variant",       required_argument, nullptr, 1010 },
+	{ "nicehash",      no_argument,       nullptr, 1006 },
 #ifndef XMRIG_NO_SSL
-	{ "ssl",           0, nullptr, 1088 },
+	{ "ssl",           no_argument,       nullptr, 1088 },
 #else
-	{ "ssl",           0, nullptr, 1188 },
+	{ "ssl",           no_argument,       nullptr, 1188 },
+#endif
+#ifndef XMRIG_NO_UDP
+	{ "udp",           no_argument,       nullptr, 1089 },
+	{ "udp-blind",     required_argument, nullptr, 1090 },
+#else
+	{ "udp",           no_argument,       nullptr, 1189 },
+	{ "udp-blind",     required_argument, nullptr, 1190 },
 #endif
 	{ 0, 0, 0, 0 }
 };
@@ -225,9 +245,9 @@ static struct option const pool_options[] =
 
 static struct option const api_options[] =
 {
-	{ "port",          1, nullptr, 4000 },
-	{ "access-token",  1, nullptr, 4001 },
-	{ "worker-id",     1, nullptr, 4002 },
+	{ "port",         required_argument, nullptr, 4000 },
+	{ "access-token", required_argument, nullptr, 4001 },
+	{ "worker-id",    required_argument, nullptr, 4002 },
 	{ 0, 0, 0, 0 }
 };
 
@@ -476,7 +496,12 @@ bool Options::parseArg(int key, const std::string & arg)
 #ifndef XMRIG_NO_SSL
 	case 1088: /* --ssl*/
 #else
-	case 1188: /* --ssl*/
+	case 1189: /* --ssl*/
+#endif
+#ifndef XMRIG_NO_UDP
+	case 1089: /* --udp*/
+#else
+	case 1189: /* --udp*/
 #endif
 	case 1100: /* --verbose */
 	case 1101: /* --debug */
@@ -538,6 +563,16 @@ bool Options::parseArg(int key, const std::string & arg)
 #ifndef XMRIG_NO_SSL
 	case 1388: //donate-ssl
 		parseBoolean(key, arg == "true");
+		break;
+#endif
+
+#ifndef XMRIG_NO_UDP
+	case 1090: /* --udp-blind */
+		m_pools.back().setUdpBlind(strtol(arg.c_str(), nullptr, 10));
+		break;
+#else
+	case 1190: /* --udp-blind */
+		fprintf(stderr, "UDP blind is not supported.\n");
 		break;
 #endif
 
@@ -652,6 +687,16 @@ bool Options::parseArg(int key, uint64_t arg)
 		m_donateOpt.m_minutesInCicle = (unsigned short)arg;
 		break;
 
+#ifndef XMRIG_NO_UDP
+	case 1090: /* --udp-blind */
+		m_pools.back().setUdpBlind(arg);
+		break;
+#else
+	case 1190: /* --udp-blind */
+		fprintf(stderr, "UDP blind is not supported.\n");
+		return false;
+#endif
+
 	case 1004: /* --max-cpu-usage */
 		if(arg < 1 || arg > 100)
 		{
@@ -750,6 +795,16 @@ bool Options::parseBoolean(int key, bool enable)
 #else
 	case 1188: /* --ssl*/
 		fprintf(stderr, "SSL is not supported.\n");
+		return false;
+#endif
+
+#ifndef XMRIG_NO_UDP
+	case 1089: /* --udp */
+		m_pools.back().setUdp(enable);
+		break;
+#else
+	case 1189: /* --udp*/
+		fprintf(stderr, "UDP is not supported.\n");
 		return false;
 #endif
 

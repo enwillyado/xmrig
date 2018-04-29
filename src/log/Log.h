@@ -27,6 +27,9 @@
 #include <vector>
 #include <sstream>
 
+#include <iostream>
+#include <iomanip>
+
 #include "interfaces/ILogBackend.h"
 
 class Log

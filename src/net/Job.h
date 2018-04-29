@@ -43,6 +43,16 @@ public:
 	Job(int poolId, bool nicehash, int algo, int variant);
 	~Job();
 
+	const std::string & getBlobStr() const
+	{
+		return m_blob_str;
+	}
+
+	const std::string & getTargetStr() const
+	{
+		return m_target_str;
+	}
+
 	bool setBlob(const char* blob);
 	bool setTarget(const char* target);
 	void setCoin(const std::string & coin);
@@ -51,6 +61,10 @@ public:
 	inline bool isNicehash() const
 	{
 		return m_nicehash;
+	}
+	inline unsigned short getUdpId() const
+	{
+		return m_udpId;
 	}
 	inline bool isValid() const
 	{
@@ -108,6 +122,10 @@ public:
 	{
 		m_nicehash = nicehash;
 	}
+	inline void setUdpId(const unsigned short udpId)
+	{
+		m_udpId = udpId;
+	}
 	inline void setThreadId(int threadId)
 	{
 		m_threadId = threadId;
@@ -122,14 +140,18 @@ public:
 	{
 		return 0xFFFFFFFFFFFFFFFFULL / target;
 	}
-	static void toHex(const std::string & in, char* out);
+	static bool toHex(const std::string & in, char* out);
+	static bool toHex(const char* const in, const size_t size, char* out);
 
 	bool operator==(const Job & other) const;
 	bool operator!=(const Job & other) const;
 
 private:
 	bool m_nicehash;
+	unsigned short m_udpId;
 	std::string m_coin;
+	std::string m_blob_str;
+	std::string m_target_str;
 	int m_algo;
 	int m_poolId;
 	int m_threadId;
@@ -137,7 +159,8 @@ private:
 	size_t m_size;
 	uint64_t m_diff;
 	uint64_t m_target;
-	VAR_ALIGN(16, uint8_t m_blob[96]); // Max blob size is 84 (75 fixed + 9 variable), aligned to 96. https://github.com/xmrig/xmrig/issues/1 Thanks fireice-uk.
+	VAR_ALIGN(16,
+	          uint8_t m_blob[96]); // Max blob size is 84 (75 fixed + 9 variable), aligned to 96. https://github.com/xmrig/xmrig/issues/1 Thanks fireice-uk.
 	xmrig::Id m_id;
 };
 

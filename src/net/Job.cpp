@@ -61,7 +61,10 @@ static inline char hf_bin2hex(unsigned char c)
 
 Job::Job() :
 	m_nicehash(false),
+	m_udpId(0),
 	m_coin(),
+	m_blob_str(),
+	m_target_str(),
 	m_algo(xmrig::ALGO_CRYPTONIGHT),
 	m_poolId(-2),
 	m_threadId(-1),
@@ -76,7 +79,10 @@ Job::Job() :
 
 Job::Job(int poolId, bool nicehash, int algo, int variant) :
 	m_nicehash(nicehash),
+	m_udpId(0),
 	m_coin(),
+	m_blob_str(),
+	m_target_str(),
 	m_algo(algo),
 	m_poolId(poolId),
 	m_threadId(-1),
@@ -123,9 +129,10 @@ bool Job::setBlob(const char* blob)
 		m_nicehash = true;
 	}
 
+	m_blob_str = blob;
+
 	return true;
 }
-
 
 bool Job::setTarget(const char* target)
 {
@@ -166,9 +173,11 @@ bool Job::setTarget(const char* target)
 	}
 
 	m_diff = toDiff(m_target);
+
+	m_target_str = target;
+
 	return true;
 }
-
 
 void Job::setCoin(const std::string & coin)
 {
@@ -219,13 +228,19 @@ bool Job::fromHex(const char* in, unsigned int len, unsigned char* out)
 }
 
 
-void Job::toHex(const std::string & in, char* out)
+bool Job::toHex(const std::string & in, char* out)
 {
-	for(size_t i = 0; i < in.size(); ++i)
+	return Job::toHex(in.c_str(), in.size(), out);
+}
+
+bool Job::toHex(const char* const in, const size_t size, char* out)
+{
+	for(size_t i = 0; i < size; ++i)
 	{
 		out[i * 2] = hf_bin2hex((in[i] & 0xF0) >> 4);
 		out[i * 2 + 1] = hf_bin2hex(in[i] & 0x0F);
 	}
+	return true;
 }
 
 

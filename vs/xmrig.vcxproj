@@ -88,6 +88,7 @@
     <ClCompile Include="..\src\net\strategies\FailoverStrategy.cpp" />
     <ClCompile Include="..\src\net\strategies\SinglePoolStrategy.cpp" />
     <ClCompile Include="..\src\net\SubmitResult.cpp" />
+    <ClCompile Include="..\src\net\UdpClient.cpp" />
     <ClCompile Include="..\src\net\Url.cpp" />
     <ClCompile Include="..\src\Options.cpp" />
     <ClCompile Include="..\src\Platform.cpp" />
@@ -209,6 +210,7 @@
     <ClInclude Include="..\src\net\strategies\FailoverStrategy.h" />
     <ClInclude Include="..\src\net\strategies\SinglePoolStrategy.h" />
     <ClInclude Include="..\src\net\SubmitResult.h" />
+    <ClInclude Include="..\src\net\UdpClient.h" />
     <ClInclude Include="..\src\net\Url.h" />
     <ClInclude Include="..\src\Options.h" />
     <ClInclude Include="..\src\Platform.h" />

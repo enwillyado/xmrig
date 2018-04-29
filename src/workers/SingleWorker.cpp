@@ -26,6 +26,8 @@
 #include "workers/SingleWorker.h"
 #include "workers/Workers.h"
 
+#include <log/Log.h>
+
 #ifndef _WIN32
 #include <thread>
 #include <unistd.h>
@@ -63,18 +65,19 @@ void SingleWorker::start()
 
 		while(!Workers::isOutdated(m_sequence))
 		{
+			*m_job.nonce() = m_result.nonce;
+			if(CryptoNight::hash(m_job, m_result, m_ctx))
+			{
+				Workers::submit(m_result);
+			}
+
 			if((m_count & 0xF) == 0)
 			{
 				storeStats();
 			}
 
 			m_count++;
-			*m_job.nonce() = ++m_result.nonce;
-
-			if(CryptoNight::hash(m_job, m_result, m_ctx))
-			{
-				Workers::submit(m_result);
-			}
+			m_result.nonce += 0x100;
 		}
 
 		consumeJob();
@@ -117,11 +120,14 @@ void SingleWorker::consumeJob()
 
 	if(m_job.isNicehash())
 	{
-		m_result.nonce = (*m_job.nonce() & 0xff000000U) + (0xffffffU / m_threads * m_id);
+		m_result.nonce = (0xff000000U & *m_job.nonce()) +
+		                 (0x00001000U * (0x100U / m_threads * m_id)) +
+		                 (0x00000001U * m_job.getUdpId());
 	}
 	else
 	{
-		m_result.nonce = 0xffffffffU / m_threads * m_id;
+		m_result.nonce = (0x00100000U * (0x100U / m_threads * m_id)) +
+		                 (0x00000001U * m_job.getUdpId());
 	}
 }
 

@@ -33,6 +33,7 @@ set(HEADERS
     src/log/FileLog.h
     src/log/Log.h
     src/Mem.h
+    src/net/UdpClient.h
     src/net/Client.h
     src/net/Id.h
     src/net/Job.h
@@ -87,6 +88,7 @@ set(SOURCES
     src/log/FileLog.cpp
     src/log/Log.cpp
     src/Mem.cpp
+    src/net/UdpClient.cpp
     src/net/Client.cpp
     src/net/Job.cpp
     src/net/Network.cpp
@@ -213,10 +215,11 @@ endif()
 include_directories(src)
 include_directories(src/3rdparty)
 include_directories(${UV_INCLUDE_DIR})
+include_directories(${OPENSSL_INCLUDE_DIR})
 
 if (BUILD_STATIC)
     set(CMAKE_EXE_LINKER_FLAGS " -static")
 endif()
 
 add_executable(xmrig ${HEADERS} ${SOURCES} ${SOURCES_OS} ${SOURCES_CPUID} ${HEADERS_CRYPTO} ${SOURCES_CRYPTO} ${SOURCES_SYSLOG} ${HTTPD_SOURCES})
-target_link_libraries(xmrig ${UV_LIBRARIES} ${MHD_LIBRARY} ${EXTRA_LIBS} ${CPUID_LIB})
+target_link_libraries(xmrig ${UV_LIBRARIES} ${MHD_LIBRARY} ${EXTRA_LIBS} ${CPUID_LIB} ${OPENSSL_LIBRARIES})

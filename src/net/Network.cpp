@@ -142,6 +142,8 @@ void Network::onJobResult(const JobResult & result)
 	}
 
 	m_strategy->submit(result);
+
+	LOG_INFO("matched with nonce " << std::hex << std::setw(8) << std::setfill('0') << result.nonce);
 }
 
 

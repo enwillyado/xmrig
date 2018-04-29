@@ -103,6 +103,16 @@ public:
 		return m_ssl;
 	}
 #endif
+#ifndef XMRIG_NO_UDP
+	inline bool isUdp() const
+	{
+		return m_udp;
+	}
+	inline unsigned short getUdpBlind() const
+	{
+		return m_udpBlind;
+	}
+#endif
 	inline bool isProxyed() const
 	{
 		return proxyHost().size() > 0;
@@ -152,6 +162,17 @@ public:
 	}
 #endif
 
+#ifndef XMRIG_NO_UDP
+	inline void setUdp(const bool udp)
+	{
+		m_udp = udp;
+	}
+	inline void setUdpBlind(const unsigned short udpBlind)
+	{
+		m_udpBlind = udpBlind;
+	}
+#endif
+
 	bool parse(const std::string & url);
 	bool setUserpass(const std::string & userpass);
 	void adjust(int algo);
@@ -164,6 +185,10 @@ private:
 	bool m_nicehash;
 #ifndef XMRIG_NO_SSL
 	bool m_ssl;
+#endif
+#ifndef XMRIG_NO_UDP
+	bool m_udp;
+	unsigned short m_udpBlind;
 #endif
 	std::string m_host;
 	std::string m_password;

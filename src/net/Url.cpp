@@ -51,6 +51,10 @@ Url::Url()
 #ifndef XMRIG_NO_SSL
 	  m_ssl(false),
 #endif
+#ifndef XMRIG_NO_UDP
+	  m_udp(false),
+	  m_udpBlind(0),
+#endif
 	  m_host(),
 	  m_password(),
 	  m_user(),
@@ -68,6 +72,10 @@ Url::Url(const std::string & url)
 	  m_nicehash(false),
 #ifndef XMRIG_NO_SSL
 	  m_ssl(false),
+#endif
+#ifndef XMRIG_NO_UDP
+	  m_udp(false),
+	  m_udpBlind(0),
 #endif
 	  m_host(),
 	  m_password(),
@@ -94,6 +102,10 @@ Url::Url(const std::string & host,
 	  m_nicehash(nicehash),
 #ifndef XMRIG_NO_SSL
 	  m_ssl(ssl),
+#endif
+#ifndef XMRIG_NO_UDP
+	  m_udp(false),
+	  m_udpBlind(0),
 #endif
 	  m_host(host),
 	  m_password(password),

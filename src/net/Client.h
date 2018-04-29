@@ -31,6 +31,12 @@
 
 #include "libuv-tls/uv_tls.h"
 
+
+#ifndef XMRIG_NO_UDP
+#include "net/UdpClient.h"
+#include <set>
+#endif
+
 #include "net/Job.h"
 #include "net/SubmitResult.h"
 #include "net/Url.h"
@@ -51,7 +57,8 @@ public:
 		ConnectingState,
 		ProxingState,
 		ConnectedState,
-		ClosingState
+		ClosingState,
+		UdpState,
 	};
 
 	enum
@@ -122,7 +129,7 @@ private:
 	void connect(struct sockaddr* addr);
 	void prelogin();
 	void login();
-	void parse(char* line, size_t len);
+	void parse(const std::string & sender, char* const line, size_t len);
 	void parseExtensions(const rapidjson::Value & value);
 	void parseNotification(const std::string & method, const rapidjson::Value & params,
 	                       const rapidjson::Value & error);
@@ -135,6 +142,7 @@ private:
 	void processConnect(uv_connect_t* req, int status);
 	void processHandhake(int status);
 	void processRead(ssize_t nread, const uv_buf_t* buf);
+	void processReadUdp(const std::string & sender, const ssize_t nread, const uv_buf_t* buf);
 
 	static void onAllocBuffer(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf);
 	static void onClose(uv_handle_t* handle);
@@ -145,6 +153,13 @@ private:
 	static void onHandshake(uv_tls_t* tls, int status);
 	static void onWriteTls(uv_tls_t* utls, int status);
 	static void onReadTls(uv_tls_t* strm, ssize_t nrd, const uv_buf_t* bfr);
+#endif
+#ifndef XMRIG_NO_UDP
+	static void onReadUdp(uv_udp_t* handle,
+	                      ssize_t nread,
+	                      const uv_buf_t* buf,
+	                      const struct sockaddr* addr,
+	                      unsigned flags);
 #endif
 	static void onResolved(uv_getaddrinfo_t* req, int status, struct addrinfo* res);
 
@@ -196,9 +211,16 @@ private:
 	uv_connect_t m_req;
 	uv_tcp_t m_socket;
 
-#ifndef XMRIG_PROXY_PROJECT
-	uv_timer_t m_keepAliveTimer;
+#ifndef XMRIG_NO_UDP
+	uv_udp_t m_udp_send_socket;
+	uv_udp_t m_udp_recv_socket;
+	uv_udp_send_t send_req;
+
+	typedef std::set<UdpClient> UdpClients;
+	UdpClients m_udp_clients;
 #endif
+
+	uv_timer_t m_keepAliveTimer;
 };
 
 

@@ -258,6 +258,9 @@
     <ClCompile Include="..\src\3rdparty\libuv-tls\uv_tls.cc">
       <Filter>Archivos de código fuente\3rdparty\libuv-tls</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\net\UdpClient.cpp">
+      <Filter>Archivos de código fuente\net</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\res\app.rc">
@@ -593,6 +596,9 @@
     </ClInclude>
     <ClInclude Include="..\src\3rdparty\libuv-tls\uv_tls.h">
       <Filter>Archivos de encabezado\3rdparty\libuv-tls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\net\UdpClient.h">
+      <Filter>Archivos de encabezado\net</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
