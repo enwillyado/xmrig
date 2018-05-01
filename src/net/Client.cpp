@@ -750,7 +750,7 @@ void Client::parse(const std::string & sender, char* const line, size_t len)
 		// Sign on client
 		//
 		bool newClient = false;
-		UdpClientKey udpClient(sender, udp.GetUint64());
+		const UdpClientKey udpClient(sender, udp.GetUint64());
 		UdpClients::iterator clientItr = m_udp_peer.find(udpClient);
 
 		unsigned short id = (clientItr == m_udp_peer.end()) ? (m_udp_peer.size() + 1) : clientItr->second.id();
@@ -760,6 +760,7 @@ void Client::parse(const std::string & sender, char* const line, size_t len)
 			clientItr->second.setId(id);
 			newClient = true;
 		}
+
 		UdpClientValue & client = clientItr->second;
 		client.timealive();
 

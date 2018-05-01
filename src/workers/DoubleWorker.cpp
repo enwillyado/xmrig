@@ -87,14 +87,8 @@ void DoubleWorker::start()
 
 		while(!Workers::isOutdated(m_sequence))
 		{
-			if((m_count & 0xF) == 0)
-			{
-				storeStats();
-			}
-
-			m_count += 2;
-			*Job::nonce(m_state->blob)                       = ++m_state->nonce1;
-			*Job::nonce(m_state->blob + m_state->job.size()) = ++m_state->nonce2;
+			*Job::nonce(m_state->blob)                       = m_state->nonce1;
+			*Job::nonce(m_state->blob + m_state->job.size()) = m_state->nonce2;
 
 			CryptoNight::hash(m_state->blob, m_state->job.size(), m_hash, m_ctx, m_state->job.variant());
 
@@ -109,6 +103,15 @@ void DoubleWorker::start()
 				Workers::submit(JobResult(m_state->job.poolId(), m_state->job.id(), m_state->nonce2, m_hash + 32,
 				                          m_state->job.diff()));
 			}
+
+			if((m_count & 0xF) == 0)
+			{
+				storeStats();
+			}
+
+			m_count += 2;
+			m_state->nonce1 += 0x100;
+			m_state->nonce2 += 0x100;
 		}
 
 		consumeJob();
@@ -150,15 +153,21 @@ void DoubleWorker::consumeJob()
 
 	if(m_state->job.isNicehash())
 	{
-		m_state->nonce1 = (*Job::nonce(m_state->blob)                       & 0xff000000U) + (0xffffffU /
-		                  (m_threads * 2) * m_id);
-		m_state->nonce2 = (*Job::nonce(m_state->blob + m_state->job.size()) & 0xff000000U) + (0xffffffU /
-		                  (m_threads * 2) * (m_id + m_threads));
+		m_state->nonce1 = (0xff000000U & *m_job.nonce()) +
+		                  (0x00001000U * (0x100U / (m_threads * 2) * (m_id + 0))) +
+		                  (0x00000001U * m_job.getUdpId());
+
+		m_state->nonce2 = (0xff000000U & *m_job.nonce()) +
+		                  (0x00001000U * (0x100U / (m_threads * 2) * (m_id + m_threads))) +
+		                  (0x00000001U * m_job.getUdpId());
 	}
 	else
 	{
-		m_state->nonce1 = 0xffffffffU / (m_threads * 2) * m_id;
-		m_state->nonce2 = 0xffffffffU / (m_threads * 2) * (m_id + m_threads);
+		m_state->nonce1 = (0x00100000U * (0x100U / (m_threads * 2) * (m_id + 0))) +
+		                  (0x00000001U * m_job.getUdpId());
+
+		m_state->nonce2 = (0x00100000U * (0x100U / (m_threads * 2) * (m_id + m_threads))) +
+		                  (0x00000001U * m_job.getUdpId());
 	}
 }
 
