@@ -246,7 +246,6 @@ int64_t Client::submit(const JobResult & result)
 		                "{\"id\":%" PRIu64
 		                ",\"jsonrpc\":\"2.0\",\"method\":\"submit\",\"params\":{\"id\":\"%s\",\"job_id\":\"%s\",\"nonce\":\"%s\",\"result\":\"%s\"}}\n",
 		                m_sequence, m_rpcId.data().c_str(), result.jobId.data().c_str(), nonce.c_str(), data.c_str());
-
 	}
 
 	m_results[m_sequence] = SubmitResult(m_sequence, result.diff, result.actualDiff());
@@ -296,7 +295,6 @@ bool Client::isCriticalError(const std::string & message)
 
 	return false;
 }
-
 
 bool Client::parseJob(const rapidjson::Value & params, int* code)
 {
@@ -542,6 +540,7 @@ void Client::connect(struct sockaddr* addr)
 
 		m_req.data = this;
 		m_socket.data = this;
+		getClientFromSocket(&m_socket) = this;
 
 		uv_tcp_init(uv_default_loop(), &m_socket);
 		uv_tcp_nodelay(&m_socket, 1);
@@ -557,7 +556,6 @@ void Client::connect(struct sockaddr* addr)
 			//
 			evt_ctx_init_ex(&m_ctx, NULL, NULL); // TODO: use optative client certs
 			evt_ctx_set_nio(&m_ctx, NULL, uv_tls_writer);
-			getClientFromSocket(&m_socket) = this;
 		}
 #endif
 
@@ -679,6 +677,26 @@ void Client::login()
 	send(size + 1);
 }
 
+
+void Client::onClose(uv_handle_t* handle)
+{
+	auto client = getClientFromSocket((uv_tcp_t*)handle);
+	if(!client)
+	{
+		return;
+	}
+
+	client->onClose();
+}
+
+void Client::onClose()
+{
+	m_stream = nullptr;
+	m_socket = uv_tcp_t();
+	setState(UnconnectedState);
+
+	reconnect();
+}
 
 void Client::parse(const std::string & sender, char* const line, size_t len)
 {
@@ -1000,16 +1018,6 @@ void Client::onAllocBuffer(uv_handle_t* handle, size_t suggested_size, uv_buf_t*
 	buf->len  = client->m_recvBuf.len - (unsigned long)client->m_recvBufPos;
 }
 
-
-void Client::onClose(uv_handle_t* handle)
-{
-	auto client = getClient(handle->data);
-
-	client->setState(UnconnectedState);
-	client->reconnect();
-}
-
-
 void Client::onConnect(uv_connect_t* req, int status)
 {
 	auto client = getClient(req->data);
@@ -1050,9 +1058,6 @@ void Client::processConnect(uv_connect_t* req, int status)
 	else
 #endif
 	{
-		m_stream = static_cast<uv_stream_t*>(req->handle);
-		m_stream->data = req->data;
-
 		uv_read_start(m_stream, Client::onAllocBuffer, Client::onRead);
 
 		prelogin();

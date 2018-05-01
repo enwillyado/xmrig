@@ -129,6 +129,7 @@ private:
 	void connect(struct sockaddr* addr);
 	void prelogin();
 	void login();
+	void onClose();
 	void parse(const std::string & sender, char* const line, size_t len);
 	void parseExtensions(const rapidjson::Value & value);
 	void parseNotification(const std::string & method, const rapidjson::Value & params,
@@ -165,7 +166,7 @@ private:
 
 	static inline Client* getClient(void* data)
 	{
-		return static_cast<Client*>(data);
+		return reinterpret_cast<Client*>(data);
 	}
 
 	static inline Client* & getClientFromSocket(uv_tcp_t* socket)
