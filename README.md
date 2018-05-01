@@ -11,8 +11,11 @@ Originally based on cpuminer-multi with heavy optimizations/rewrites and removin
 
 ## Own features
 
-* Connect to pool or proxies over HTTP PROXY.
-* Include basic encrypted communications.
+* Connect to pool or proxies over **HTTP PROXY**.
+* Include basic **encrypted** communications.
+* Include **SSL/TLS** communications.
+* Include **UDP** delegated clients.
+* Include **CMAKE** flags to reduce execution code.
 
 ## Donations
 * XMR: `433hhduFBtwVXtQiTTTeqyZsB36XaBLJB6bcQfnqqMs5RJitdpi8xBN21hWiEfuPp2hytmf1cshgK5Grgo6QUvLZCP2QSMi`
