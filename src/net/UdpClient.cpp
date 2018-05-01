@@ -26,50 +26,92 @@
 #include <net/UdpClient.h>
 #include <log/Log.h>
 
-UdpClient::UdpClient()
+UdpClientKey::UdpClientKey()
 	: m_sender(),
-	  m_port(0),
-	  m_id(0),
-	  m_valid(false)
+	  m_port(0)
 {
 }
 
-UdpClient::UdpClient(const std::string & sender, const unsigned short port)
+UdpClientKey::UdpClientKey(const std::string & sender, const unsigned short port)
 	: m_sender(sender),
-	  m_port(port),
-	  m_id(0),
-	  m_valid(true)
+	  m_port(port)
+{
+}
+
+UdpClientKey::~UdpClientKey()
+{
+
+}
+
+const std::string & UdpClientKey::sender() const
+{
+	return m_sender;
+}
+
+const unsigned short & UdpClientKey::port() const
+{
+	return m_port;
+}
+
+bool UdpClientKey::operator<(const UdpClientKey & other) const
+{
+	return (m_sender + Log::ToString(m_port)) < (other.m_sender + Log::ToString(other.m_port));
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+UdpClientValue::UdpClientValue()
+	: m_id(),
+	  m_last_time(time(NULL))
+{
+}
+
+UdpClientValue::~UdpClientValue()
+{
+}
+
+void UdpClientValue::setId(const unsigned short id)
+{
+	m_id = id;
+}
+
+void UdpClientValue::timealive()
+{
+	m_last_time = time(NULL);
+}
+
+const unsigned short & UdpClientValue::id() const
+{
+	return m_id;
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+UdpClient::UdpClient()
+	: m_key(),
+	  m_value()
+{
+}
+
+UdpClient::UdpClient(const UdpClientKey & key, const UdpClientValue & value)
+	: m_key(key),
+	  m_value(value)
 {
 }
 
 UdpClient::~UdpClient()
 {
-
 }
 
-void UdpClient::setId(const unsigned short id)
+const UdpClientKey & UdpClient::key() const
 {
-	m_id = id;
+	return m_key;
 }
 
-const std::string & UdpClient::sender() const
+const UdpClientValue & UdpClient::value() const
 {
-	return m_sender;
+	return m_value;
 }
 
-const unsigned short & UdpClient::port() const
-{
-	return m_port;
-}
-
-const unsigned short & UdpClient::id() const
-{
-	return m_id;
-}
-
-bool UdpClient::operator<(const UdpClient & other) const
-{
-	return (m_sender + Log::ToString(m_port)) < (other.m_sender + Log::ToString(other.m_port));
-}
 
 #endif

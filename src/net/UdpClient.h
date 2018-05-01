@@ -28,29 +28,60 @@
 #ifndef XMRIG_NO_UDP
 
 #include <string>
+#include <time.h>
 
-class UdpClient
+class UdpClientKey
 {
 public:
-	UdpClient();
-	UdpClient(const std::string & sender, const unsigned short port);
-	~UdpClient();
-
-	void setId(const unsigned short id);
+	UdpClientKey();
+	UdpClientKey(const std::string & sender, const unsigned short port);
+	~UdpClientKey();
 
 	const std::string & sender() const;
 
 	const unsigned short & port() const;
 
-	const unsigned short & id() const;
-
-	bool operator<(const UdpClient & other) const;
+	bool operator<(const UdpClientKey & other) const;
 
 private:
 	std::string m_sender;
 	unsigned short m_port;
+};
+
+class UdpClientValue
+{
+public:
+	UdpClientValue();
+	~UdpClientValue();
+
+	void setId(const unsigned short id);
+
+	void timealive();
+
+	const unsigned short & id() const;
+
+private:
 	unsigned short m_id;
+	time_t m_last_time;
 	bool m_valid;
+};
+
+class UdpClient
+{
+public:
+	UdpClient();
+	UdpClient(const UdpClientKey & key, const UdpClientValue & value);
+	~UdpClient();
+
+	void setKey(const UdpClientKey & key);
+	void setValue(const UdpClientValue & key);
+
+	const UdpClientKey & key() const;
+	const UdpClientValue & value() const;
+
+private:
+	UdpClientKey m_key;
+	UdpClientValue m_value;
 };
 
 #endif

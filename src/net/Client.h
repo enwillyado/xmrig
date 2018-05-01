@@ -217,8 +217,8 @@ private:
 	uv_udp_t m_udp_recv_socket;
 	uv_udp_send_t send_req;
 
-	typedef std::set<UdpClient> UdpClients;
-	UdpClients m_udp_clients;
+	typedef std::map<UdpClientKey, UdpClientValue> UdpClients;
+	UdpClients m_udp_peer;
 #endif
 
 	uv_timer_t m_keepAliveTimer;
