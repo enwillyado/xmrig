@@ -27,6 +27,13 @@
 #include <uv.h>
 
 
+#ifndef XMRIG_NO_SSL
+#include <openssl/opensslv.h>
+#define OPENSSL_VERSION_STR   " SSL/" OPENSSL_VERSION_TEXT
+#else
+#define OPENSSL_VERSION_STR   ""
+#endif
+
 #include "Cpu.h"
 #include "log/Log.h"
 #include "Mem.h"
@@ -51,7 +58,8 @@ static void print_versions()
 #   endif
 
 
-	PRINT_MSG(" * VERSIONS:     " APP_NAME "/" << APP_VERSION << " libuv/" << uv_version_string() << buf);
+	PRINT_MSG(" * VERSIONS:     " APP_NAME "/" << APP_VERSION << " libuv/" << uv_version_string() << buf <<
+	          OPENSSL_VERSION_STR);
 }
 
 
