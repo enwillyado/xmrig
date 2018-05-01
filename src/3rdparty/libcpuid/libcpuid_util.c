@@ -152,7 +152,7 @@ int match_cpu_codename(const struct match_entry_t* matchtable, int count,
 	int bestindex = 0;
 	int i, t;
 
-#if defined __GNUC__ & defined _WIN64
+#if defined __GNUC__ & (defined _WIN64 | defined _WIN32)
 	debugf(3, "Matching cpu f:%d, m:%d, s:%d, xf:%d, xm:%d, ncore:%d, l2:%d, bcode:%d, bits:%I64d, code:%d\n",
 #else
 	debugf(3, "Matching cpu f:%d, m:%d, s:%d, xf:%d, xm:%d, ncore:%d, l2:%d, bcode:%d, bits:%llu, code:%d\n",

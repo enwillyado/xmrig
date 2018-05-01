@@ -14,18 +14,38 @@ extern "C" {
 #endif
 
 #include <assert.h>
+#include <string.h>
 #include "evt_tls.h"
 
-#include "openssl/ossl_typ.h"
-#include "openssl/ssl.h"
+/**
+ * Functions copy from https://github.com/libimobiledevice/libimobiledevice/blob/master/src/idevice.c
+ */
+#if OPENSSL_VERSION_NUMBER < 0x10002000L
+static void SSL_COMP_free_compression_methods(void)
+{
+	sk_SSL_COMP_free(SSL_COMP_get_compression_methods());
+}
+#endif
 
-#include <string.h>
+static void openssl_remove_thread_state(void)
+{
+	/**
+	 * ERR_remove_thread_state() is available since OpenSSL 1.0.0-beta1,
+	 * but deprecated in OpenSSL 1.1.0
+	 */
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER >= 0x10000001L
+	ERR_remove_thread_state(NULL);
+#else
+	ERR_remove_state(0);
+#endif
+#endif
+}
 
 /*
  *All the asserts used in the code are possible targets for error
  * handling/error reporting
 */
-
 evt_endpt_t evt_tls_get_role(const evt_tls_t* t)
 {
 	assert(t != NULL);
@@ -71,12 +91,12 @@ static void tls_begin(void)
 evt_tls_t* evt_ctx_get_tls(evt_ctx_t* d_eng)
 {
 	int r = 0;
-	evt_tls_t* con = (evt_tls_t*)malloc(sizeof(evt_tls_t));
+	evt_tls_t* con = new evt_tls_t;
 	if(!con)
 	{
 		return NULL;
 	}
-	memset((void*)con, 0, sizeof * con);
+	memset(con, 0, sizeof * con);
 
 	SSL* ssl = SSL_new(d_eng->ctx);
 	if(!ssl)
@@ -158,10 +178,6 @@ int evt_ctx_set_crt_key(evt_ctx_t* tls, const char* crtf, const char* key)
 		}
 		tls->cert_set = 1;
 	}
-	else
-	{
-		tls->cert_set = 0;
-	}
 
 	if(key != NULL)
 	{
@@ -177,10 +193,6 @@ int evt_ctx_set_crt_key(evt_ctx_t* tls, const char* crtf, const char* key)
 			return r;
 		}
 		tls->key_set = 1;
-	}
-	else
-	{
-		tls->key_set = 0;
 	}
 
 	return 1;
@@ -203,10 +215,19 @@ int evt_ctx_init(evt_ctx_t* tls)
 	long options = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3;
 	SSL_CTX_set_options(tls->ctx, options);
 
+#if defined(SSL_MODE_RELEASE_BUFFERS)
 	SSL_CTX_set_mode(tls->ctx, SSL_MODE_AUTO_RETRY
 	                 | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER
 	                 | SSL_MODE_ENABLE_PARTIAL_WRITE
+	                 | SSL_MODE_RELEASE_BUFFERS
 	                );
+#else
+	SSL_CTX_set_mode(tls->ctx, SSL_MODE_AUTO_RETRY
+	                 | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER
+	                 | SSL_MODE_ENABLE_PARTIAL_WRITE
+	                 | SSL_MODE_RELEASE_BUFFERS
+	                );
+#endif
 
 	tls->cert_set = 0;
 	tls->key_set = 0;
@@ -220,9 +241,11 @@ int evt_ctx_init(evt_ctx_t* tls)
 
 int evt_ctx_init_ex(evt_ctx_t* tls, const char* crtf, const char* key)
 {
-	int r = 0;
-	r = evt_ctx_init(tls);
-	assert(0 == r);
+	const int init_ret = evt_ctx_init(tls);
+	if(0 != init_ret)
+	{
+		return init_ret;
+	}
 	return evt_ctx_set_crt_key(tls, crtf, key);
 }
 
@@ -380,7 +403,7 @@ int evt_tls_feed_data(evt_tls_t* c, void* data, int sz)
 	for(offset = 0; offset < sz; offset += i)
 	{
 		//handle error condition
-		i =  BIO_write(c->app_bio, (char*)data + offset, sz - offset);
+		i =  BIO_write(c->app_bio, (unsigned char*)data + offset, sz - offset);
 
 		//if handshake is not complete, do it again
 		if(evt_tls_is_handshake_over(c))
@@ -472,19 +495,18 @@ void evt_ctx_free(evt_ctx_t* ctx)
 	SSL_CTX_free(ctx->ctx);
 	ctx->ctx = NULL;
 
-	ERR_remove_state(0);
+	openssl_remove_thread_state();
 	ENGINE_cleanup();
 	CONF_modules_unload(1);
 	ERR_free_strings();
 	EVP_cleanup();
-	sk_SSL_COMP_free(SSL_COMP_get_compression_methods());
-	//SSL_COMP_free_compression_methods();
+	SSL_COMP_free_compression_methods();
 	CRYPTO_cleanup_all_ex_data();
 }
 
 
 // adapted from Openssl's s23_srvr.c code
-int evt_is_tls_stream(const char* bfr, const int nrd)
+int evt_is_tls_stream(const char* bfr, const size_t nrd)
 {
 	int is_tls = 0;
 	assert(nrd >= 11);

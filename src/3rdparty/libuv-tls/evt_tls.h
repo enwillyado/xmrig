@@ -200,7 +200,7 @@ SSL* evt_get_ssl(const evt_tls_t* tls);
 /*check if incoming data is TLS clientHello.
 return 1 if the stream is TLS and 0 otherwise
 */
-int evt_is_tls_stream(const char* bfr, const int nrd);
+int evt_is_tls_stream(const char* bfr, const size_t nrd);
 
 
 #ifdef __cplusplus

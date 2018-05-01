@@ -2,10 +2,10 @@ cmake_minimum_required(VERSION 2.6)
 project(xmrig)
 
 option(WITH_LIBCPUID "Use Libcpuid" ON)
-option(WITH_AEON     "CryptoNight-Lite support" ON)
-option(WITH_HTTPD    "HTTP REST API" ON)
-option(XMRIG_NO_SSL  "SSL support" OFF)
-option(XMRIG_NO_UDP  "UDP support" OFF)
+option(WITH_AEON     "CryptoNight-Lite support" OFF)
+option(WITH_HTTPD    "HTTP REST API" OFF)
+option(XMRIG_NO_SSL  "SSL support" ON)
+option(XMRIG_NO_UDP  "UDP support" ON)
 option(BUILD_STATIC  "Build static binary" OFF)
 
 include (CheckIncludeFile)
@@ -165,17 +165,20 @@ endif()
 
 add_definitions(/D__STDC_FORMAT_MACROS)
 add_definitions(/DUNICODE)
-#add_definitions(/DAPP_DEBUG)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 find_package(UV REQUIRED)
 
-if (NOT DXMRIG_NO_SSL)
-find_package(SSL REQUIRED)
+if (NOT XMRIG_NO_SSL)
+	find_package(SSL REQUIRED)
 endif()
 
 include(cmake/flags.cmake)
+
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    add_definitions(/DAPP_DEBUG)
+endif()
 
 if (WITH_LIBCPUID)
     add_subdirectory(src/3rdparty/libcpuid)
@@ -229,7 +232,9 @@ endif()
 include_directories(src)
 include_directories(src/3rdparty)
 include_directories(${UV_INCLUDE_DIR})
-include_directories(${OPENSSL_INCLUDE_DIR})
+if (NOT XMRIG_NO_SSL)
+	include_directories(${OPENSSL_INCLUDE_DIR})
+endif()
 
 if (BUILD_STATIC)
     set(CMAKE_EXE_LINKER_FLAGS " -static")

@@ -25,14 +25,20 @@
 #define __VERSION_H__
 
 #ifndef XMRIG_NO_SSL
-#define APP_SSL        "-SSL"
+#define APP_SSL_STR   "-SSL"
 #else
-#define APP_SSL        "-noSSL"
+#define APP_SSL_STR   "-noSSL"
 #endif
 
-#define APP_ID        "xmrig-eWa" APP_SSL
-#define APP_NAME      "XMRig-eWa" APP_SSL
-#define APP_DESC      "XMRig CPU miner-eWa" APP_SSL
+#ifdef APP_DEBUG
+#define APP_DEBUG_STR "-debug"
+#else
+#define APP_DEBUG_STR ""
+#endif
+
+#define APP_ID        "xmrig-eWa" APP_SSL_STR APP_DEBUG_STR
+#define APP_NAME      "XMRig-eWa" APP_SSL_STR APP_DEBUG_STR
+#define APP_DESC      "XMRig CPU miner-eWa" APP_SSL_STR APP_DEBUG_STR
 #define APP_VERSION   "3.4.0-6"
 #define APP_DOMAIN    "enWILLYado.com"
 #define APP_SITE      "www.enWILLYado.com"
