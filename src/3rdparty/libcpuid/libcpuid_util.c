@@ -152,7 +152,11 @@ int match_cpu_codename(const struct match_entry_t* matchtable, int count,
 	int bestindex = 0;
 	int i, t;
 
-	debugf(3, "Matching cpu f:%d, m:%d, s:%d, xf:%d, xm:%d, ncore:%d, l2:%d, bcode:%d, bits:%I64u, code:%d\n",
+#if defined __GNUC__ & defined _WIN64
+	debugf(3, "Matching cpu f:%d, m:%d, s:%d, xf:%d, xm:%d, ncore:%d, l2:%d, bcode:%d, bits:%I64d, code:%d\n",
+#else
+	debugf(3, "Matching cpu f:%d, m:%d, s:%d, xf:%d, xm:%d, ncore:%d, l2:%d, bcode:%d, bits:%llu, code:%d\n",
+#endif
 	       data->family, data->model, data->stepping, data->ext_family,
 	       data->ext_model, data->num_cores, data->l2_cache, brand_code, (unsigned long long) bits, model_code);
 

@@ -45,6 +45,9 @@ enum
 	kMinutesInCicle = 60,
 	kDonateKeepAlive = false,
 	kDonateNiceHash = true,
+#ifndef XMRIG_NO_SSL
+	kDonateSsl = false,
+#endif
 };
 
 static const char* kDonateUrl = "fee.xmrig.com:443";

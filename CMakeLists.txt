@@ -4,6 +4,8 @@ project(xmrig)
 option(WITH_LIBCPUID "Use Libcpuid" ON)
 option(WITH_AEON     "CryptoNight-Lite support" ON)
 option(WITH_HTTPD    "HTTP REST API" ON)
+option(XMRIG_NO_SSL  "SSL support" OFF)
+option(XMRIG_NO_UDP  "UDP support" OFF)
 option(BUILD_STATIC  "Build static binary" OFF)
 
 include (CheckIncludeFile)
@@ -146,7 +148,8 @@ else()
         src/Platform_unix.cpp
         )
 
-    set(EXTRA_LIBS ssl crypto pthread rt dl pthread)
+    set(EXTRA_LIBS pthread rt dl pthread)
+
 endif()
 
 if (CMAKE_SYSTEM_NAME STREQUAL FreeBSD)
@@ -162,12 +165,15 @@ endif()
 
 add_definitions(/D__STDC_FORMAT_MACROS)
 add_definitions(/DUNICODE)
-add_definitions(/DXMRIG_NO_SSL)
 #add_definitions(/DAPP_DEBUG)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 find_package(UV REQUIRED)
+
+if (NOT DXMRIG_NO_SSL)
+find_package(SSL REQUIRED)
+endif()
 
 include(cmake/flags.cmake)
 
@@ -195,6 +201,14 @@ endif()
 
 if (NOT WITH_AEON)
     add_definitions(/DXMRIG_NO_AEON)
+endif()
+
+if (XMRIG_NO_SSL)
+    add_definitions(/DXMRIG_NO_SSL)
+endif()
+
+if (XMRIG_NO_UDP)
+    add_definitions(/DXMRIG_NO_UDP)
 endif()
 
 if (WITH_HTTPD)

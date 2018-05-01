@@ -496,7 +496,7 @@ bool Options::parseArg(int key, const std::string & arg)
 #ifndef XMRIG_NO_SSL
 	case 1088: /* --ssl*/
 #else
-	case 1189: /* --ssl*/
+	case 1188: /* --ssl*/
 #endif
 #ifndef XMRIG_NO_UDP
 	case 1089: /* --udp*/

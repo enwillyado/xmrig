@@ -59,7 +59,7 @@ uv_buf_t make_discover_msg(uv_udp_send_t* req)
 	uv_buf_t buffer;
 	alloc_buffer((uv_handle_t*)req, 256, &buffer);
 	memset(buffer.base, 0, buffer.len);
-	strcpy_s(buffer.base, 256, "{\"jsonudp\":\"1.0\", \"udp\":76, \"method\":\"login\"}");
+	memcpy(buffer.base, "{\"jsonudp\":\"1.0\", \"udp\":76, \"method\":\"login\"}", 256);
 	return buffer;
 }
 
@@ -76,7 +76,7 @@ uv_buf_t make_job_msg(uv_udp_send_t* req, const Job & job, const xmrig::Id & id,
 	uv_buf_t buffer;
 	alloc_buffer((uv_handle_t*)req, jobJsonStr.size() + 1, &buffer);
 	memset(buffer.base, 0, buffer.len);
-	strcpy_s(buffer.base, jobJsonStr.size() + 1, jobJsonStr.c_str());
+	memcpy(buffer.base, jobJsonStr.c_str(), jobJsonStr.size() + 1);
 
 	return buffer;
 }
@@ -499,9 +499,9 @@ void Client::onWriteTls(uv_tls_t* utls, int status)
 	uv_tls_read(utls, Client::onReadTls);
 }
 
-void Client::onReadTls(uv_tls_t* strm, ssize_t nrd, const uv_buf_t* buf)
+void Client::onReadTls(uv_tls_t* utls, ssize_t nrd, const uv_buf_t* buf)
 {
-	uv_tcp_t* socket = (uv_tcp_t*)strm->tcp_hdl->read_req.data;
+	uv_tcp_t* socket = (uv_tcp_t*)utls->tcp_hdl;
 	auto client = getClientFromSocket(socket);
 	client->m_recvBuf = *buf;
 	client->processRead(nrd, buf);
@@ -845,6 +845,7 @@ void Client::parseNotification(const std::string & method, const rapidjson::Valu
 		{
 			m_listener->onJobReceived(this, m_job);
 
+#ifndef XMRIG_NO_UDP
 			for(UdpClients::const_iterator itr = m_udp_clients.begin(); itr != m_udp_clients.end(); ++itr)
 			{
 				// send actual job over UDP
@@ -856,6 +857,7 @@ void Client::parseNotification(const std::string & method, const rapidjson::Valu
 				uv_udp_send(&send_req, &m_udp_send_socket, &discover_msg, 1, reinterpret_cast<const sockaddr*>(&send_addr),
 				            on_send);
 			}
+#endif
 		}
 
 		return;
@@ -1058,10 +1060,10 @@ void Client::processConnect(uv_connect_t* req, int status)
 }
 
 #ifndef XMRIG_NO_SSL
-void Client::onHandshake(uv_tls_t* tls, int status)
+void Client::onHandshake(uv_tls_t* utls, int status)
 {
-	assert(tls->tcp_hdl->data == tls);
-	uv_tcp_t* socket = (uv_tcp_t*)tls->tcp_hdl->read_req.data;
+	assert(utls->tcp_hdl->data == utls);
+	uv_tcp_t* socket = (uv_tcp_t*)utls->tcp_hdl;
 	auto client = getClientFromSocket(socket);
 	client->processHandhake(status);
 }

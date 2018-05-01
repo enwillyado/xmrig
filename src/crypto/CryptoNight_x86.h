@@ -25,9 +25,13 @@
 #ifndef __CRYPTONIGHT_X86_H__
 #define __CRYPTONIGHT_X86_H__
 
+#include <stdint.h>
 
 #ifdef __GNUC__
 #   include <x86intrin.h>
+#ifdef _WIN64
+#   include <psdk_inc/intrin-impl.h>
+#endif
 #else
 #   include <intrin.h>
 #   define __restrict__ __restrict
@@ -81,12 +85,28 @@ void (* const extra_hashes[4])(const uint8_t*, size_t, uint8_t*) = {do_blake_has
 #   define EXTRACT64(X) _mm_cvtsi128_si64(X)
 
 #   ifdef __GNUC__
-static inline uint64_t __umul128(uint64_t a, uint64_t b, uint64_t* hi)
+#ifdef __INTRINSIC_DEFINED__umul128
+#define __umul128 _umul128
+#else
+static inline uint64_t __umul128(const uint64_t & a, const uint64_t & b, uint64_t* const hi)
 {
+#if 1
+	union U
+	{
+		__uint128_t u128;
+		int64_t sv[2];
+	} var;
+	var.u128 = a;
+	var.u128 *= b;
+	*hi = var.sv[1];
+	return var.sv[0];
+#else
 	const __uint128_t r = (__uint128_t) a * (__uint128_t) b;
 	*hi = r >> 64;
 	return (uint64_t) r;
+#endif
 }
+#endif
 #   else
 #define __umul128 _umul128
 #   endif
@@ -106,8 +126,8 @@ static inline uint64_t __umul128(uint64_t multiplier, uint64_t multiplicand, uin
 	// ab * cd = a * c * 2^64 + (a * d + b * c) * 2^32 + b * d
 	const uint64_t a = multiplier >> 0x20;
 	const uint64_t b = multiplier & 0xFFFFFFFF;
-	const uint32_t c = multiplicand >> 0x20;
-	const uint32_t d = multiplicand & 0xFFFFFFFF;
+	const uint64_t c = multiplicand >> 0x20;
+	const uint64_t d = multiplicand & 0xFFFFFFFF;
 
 	const uint64_t ac = a * c;
 	const uint64_t ad = a * d;
@@ -115,12 +135,12 @@ static inline uint64_t __umul128(uint64_t multiplier, uint64_t multiplicand, uin
 	const uint64_t bd = b * d;
 
 	const uint64_t adbc = ad + bc;
-	const uint64_t adbc_carry = adbc < ad ? 0x1 : 0x0;
+	const uint64_t adbc_carry = adbc < ad ? 1 : 0;
 
 	// multiplier * multiplicand = product_hi * 2^64 + product_lo
-	const uint64_t product_lo = bd + (adbc << 32);
-	const uint64_t product_lo_carry = product_lo < bd ? 0x1 : 0x0;
-	*product_hi = ac + (adbc >> 32) + (adbc_carry << 32) + product_lo_carry;
+	const uint64_t product_lo = bd + (adbc << 0x20);
+	const uint64_t product_lo_carry = product_lo < bd ? 1 : 0;
+	*product_hi = ac + (adbc >> 0x20) + (adbc_carry << 0x20) + product_lo_carry;
 
 	return product_lo;
 }
@@ -334,6 +354,12 @@ template<size_t ITERATIONS, size_t MEM, size_t MASK, bool SOFT_AES, int VARIANT>
 inline void cryptonight_single_hash(const uint8_t* __restrict__ input, size_t size,
                                     uint8_t* __restrict__ output, cryptonight_ctx* __restrict__ ctx)
 {
+	if(VARIANT > 0 && size < 43)
+	{
+		memset(output, 0, 32);
+		return;
+	}
+
 	keccak(input, (int) size, ctx->state0, 200);
 
 	VARIANT1_INIT(0);
