@@ -90,7 +90,6 @@ void (* const extra_hashes[4])(const uint8_t*, size_t, uint8_t*) = {do_blake_has
 #else
 static inline uint64_t __umul128(const uint64_t & a, const uint64_t & b, uint64_t* const hi)
 {
-#if 1
 	union U
 	{
 		__uint128_t u128;
@@ -100,11 +99,6 @@ static inline uint64_t __umul128(const uint64_t & a, const uint64_t & b, uint64_
 	var.u128 *= b;
 	*hi = var.sv[1];
 	return var.sv[0];
-#else
-	const __uint128_t r = (__uint128_t) a * (__uint128_t) b;
-	*hi = r >> 64;
-	return (uint64_t) r;
-#endif
 }
 #endif
 #   else
