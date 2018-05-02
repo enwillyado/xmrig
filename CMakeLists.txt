@@ -1,12 +1,13 @@
 cmake_minimum_required(VERSION 2.6)
 project(xmrig)
 
-option(WITH_LIBCPUID "Use Libcpuid" ON)
-option(WITH_AEON     "CryptoNight-Lite support" OFF)
-option(WITH_HTTPD    "HTTP REST API" OFF)
-option(XMRIG_NO_SSL  "SSL support" OFF)
-option(XMRIG_NO_UDP  "UDP support" OFF)
-option(BUILD_STATIC  "Build static binary" OFF)
+option(WITH_LIBCPUID    "Use Libcpuid" ON)
+option(WITH_AEON        "CryptoNight-Lite support" OFF)
+option(WITH_HTTPD       "HTTP REST API" OFF)
+option(XMRIG_NO_STRINGS "Simply strings" OFF)
+option(XMRIG_NO_SSL     "SSL support" OFF)
+option(XMRIG_NO_UDP     "UDP support" OFF)
+option(BUILD_STATIC     "Build static binary" OFF)
 
 include (CheckIncludeFile)
 include (cmake/cpu.cmake)
@@ -148,7 +149,7 @@ else()
         src/Platform_unix.cpp
         )
 
-    set(EXTRA_LIBS pthread rt dl pthread)
+    set(EXTRA_LIBS pthread rt dl pthread c m stdc++)
 
 endif()
 
@@ -186,6 +187,10 @@ if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     add_definitions(/DAPP_DEBUG)
 endif()
 
+if (XMRIG_ARCH)
+    add_definitions(/DXMRIG_ARCH="${XMRIG_ARCH}")
+endif()
+
 if (WITH_LIBCPUID)
     add_subdirectory(src/3rdparty/libcpuid)
 
@@ -210,6 +215,10 @@ endif()
 
 if (NOT WITH_AEON)
     add_definitions(/DXMRIG_NO_AEON)
+endif()
+
+if (XMRIG_NO_STRINGS)
+    add_definitions(/DXMRIG_NO_STRINGS)
 endif()
 
 if (XMRIG_NO_SSL)

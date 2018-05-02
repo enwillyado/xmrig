@@ -34,6 +34,10 @@
 #define OPENSSL_VERSION_STR   ""
 #endif
 
+#ifndef XMRIG_ARCH
+#define XMRIG_ARCH "noarch"
+#endif
+
 #include "Cpu.h"
 #include "log/Log.h"
 #include "Mem.h"
@@ -58,7 +62,8 @@ static void print_versions()
 #   endif
 
 
-	PRINT_MSG(" * VERSIONS:     " APP_NAME "/" << APP_VERSION << " libuv/" << uv_version_string() << buf <<
+	PRINT_MSG(" * VERSIONS:     " APP_NAME "/" << APP_VERSION << " " << __DATE__ __TIME__ << " libuv/" <<
+	          uv_version_string() << buf << " " << XMRIG_ARCH <<
 	          OPENSSL_VERSION_STR);
 }
 

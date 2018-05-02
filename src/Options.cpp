@@ -59,6 +59,7 @@
 Options* Options::m_self = nullptr;
 
 
+#ifndef XMRIG_NO_STRINGS
 static char const usage[] = "Usage: \" APP_ID [OPTIONS]\"" "\n"
                             "Options: " "\n"
 #ifndef XMRIG_NO_AEON
@@ -105,6 +106,9 @@ static char const usage[] = "Usage: \" APP_ID [OPTIONS]\"" "\n"
                             "    --api-worker-id=ID   custom worker-id for API" "\n"
                             "-h, --help               display this help and exit" "\n"
                             "-V, --version            output version information and exit";
+#else
+static char const usage[] = "See man.";
+#endif
 
 static char const short_options[] = "a:c:khBp:Px:r:R:s:t:T:o:u:O:v:Vl:S";
 
