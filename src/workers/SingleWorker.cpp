@@ -66,6 +66,9 @@ void SingleWorker::start()
 		while(!Workers::isOutdated(m_sequence))
 		{
 			*m_job.nonce() = m_result.nonce;
+
+//			LOG_DEBUG("Hashing with nonce " << std::hex << std::setw(8) << std::setfill('0') << m_result.nonce << " by " << m_id << " instance " << m_job.getInstanceId() << " of " << m_job.getInstances());
+
 			if(CryptoNight::hash(m_job, m_result, m_ctx))
 			{
 				Workers::submit(m_result);
@@ -77,7 +80,7 @@ void SingleWorker::start()
 			}
 
 			m_count++;
-			m_result.nonce += 0x100;
+			m_result.nonce += m_threads;
 		}
 
 		consumeJob();
@@ -121,13 +124,13 @@ void SingleWorker::consumeJob()
 	if(m_job.isNicehash())
 	{
 		m_result.nonce = (0xff000000U & *m_job.nonce()) +
-		                 (0x00001000U * (0x100U / m_threads * m_id)) +
-		                 (0x00000001U * m_job.getUdpId());
+		                 (  0x010000U * (0x100 * m_job.getInstanceId() / m_job.getInstances())) +
+		                 (0x00000001U * m_id);
 	}
 	else
 	{
-		m_result.nonce = (0x00100000U * (0x100U / m_threads * m_id)) +
-		                 (0x00000001U * m_job.getUdpId());
+		m_result.nonce = (0x01000000U * (0x100 * m_job.getInstanceId() / m_job.getInstances())) +
+		                 (0x00000001U * m_id);
 	}
 }
 

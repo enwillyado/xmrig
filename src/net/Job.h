@@ -62,9 +62,13 @@ public:
 	{
 		return m_nicehash;
 	}
-	inline unsigned short getUdpId() const
+	inline unsigned short getInstanceId() const
 	{
-		return m_udpId;
+		return m_instanceId;
+	}
+	inline unsigned short getInstances() const
+	{
+		return m_instances;
 	}
 	inline bool isValid() const
 	{
@@ -122,9 +126,13 @@ public:
 	{
 		m_nicehash = nicehash;
 	}
-	inline void setUdpId(const unsigned short udpId)
+	inline void setInstanceId(const unsigned short instanceId)
 	{
-		m_udpId = udpId;
+		m_instanceId = instanceId;
+	}
+	inline void setInstances(const unsigned short instances)
+	{
+		m_instances = instances;
 	}
 	inline void setThreadId(int threadId)
 	{
@@ -148,7 +156,8 @@ public:
 
 private:
 	bool m_nicehash;
-	unsigned short m_udpId;
+	unsigned short m_instanceId;
+	unsigned short m_instances;
 	std::string m_coin;
 	std::string m_blob_str;
 	std::string m_target_str;

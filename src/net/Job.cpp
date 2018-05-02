@@ -61,7 +61,8 @@ static inline char hf_bin2hex(unsigned char c)
 
 Job::Job() :
 	m_nicehash(false),
-	m_udpId(0),
+	m_instanceId(0),
+	m_instances(0),
 	m_coin(),
 	m_blob_str(),
 	m_target_str(),
@@ -79,7 +80,8 @@ Job::Job() :
 
 Job::Job(int poolId, bool nicehash, int algo, int variant) :
 	m_nicehash(nicehash),
-	m_udpId(0),
+	m_instanceId(0),
+	m_instances(0),
 	m_coin(),
 	m_blob_str(),
 	m_target_str(),

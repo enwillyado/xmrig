@@ -54,30 +54,33 @@ void alloc_buffer(uv_handle_t* handle,
 	*buf = uv_buf_init((char*) malloc(suggested_size), suggested_size);
 }
 
-uv_buf_t make_discover_msg(uv_udp_send_t* req)
-{
-	uv_buf_t buffer;
-	alloc_buffer((uv_handle_t*)req, 256, &buffer);
-	memset(buffer.base, 0, buffer.len);
-	memcpy(buffer.base, "{\"jsonudp\":\"1.0\", \"udp\":76, \"method\":\"login\"}", 256);
-	return buffer;
-}
-
-uv_buf_t make_job_msg(uv_udp_send_t* req, const Job & job, const xmrig::Id & id, const unsigned short & udpId)
+uv_buf_t make_discover_msg(uv_udp_send_t* req, const unsigned short & udpPort)
 {
 	const std::string jobJsonStr =
-	    std::string("") + "{\"jsonudp\":\"1.0\", \"udp\":" + Log::ToString(76) +
-	    ", \"method\":\"job\", \"params\":{\"job_id\":\"" +
-	    Log::ToString(job.id().data()) + "\", \"blob\":\"" + job.getBlobStr() + "\", \"target\":\"" +
-	    job.getTargetStr() + "\", \"id\":\"" +
-	    id.data() + "\", \"udp_id\":\"" +
-	    Log::ToString(udpId) + "\"}}";
+	    std::string("") + "{\"jsonudp\":\"1.0\", \"udp\":" + Log::ToString(udpPort) + ", \"method\":\"login\"}";
 
 	uv_buf_t buffer;
 	alloc_buffer((uv_handle_t*)req, jobJsonStr.size() + 1, &buffer);
 	memset(buffer.base, 0, buffer.len);
 	memcpy(buffer.base, jobJsonStr.c_str(), jobJsonStr.size() + 1);
+	return buffer;
+}
 
+uv_buf_t make_job_msg(uv_udp_send_t* req, const unsigned short & udpPort, const Job & job,
+                      const xmrig::Id & id, const unsigned short & instanceId, const unsigned short & instances)
+{
+	const std::string jobJsonStr =
+	    std::string("") + "{\"jsonudp\":\"1.0\", \"udp\":" + Log::ToString(udpPort) +
+	    ", \"method\":\"job\", \"params\":{\"job_id\":\"" +
+	    Log::ToString(job.id().data()) + "\", \"blob\":\"" + job.getBlobStr() + "\", \"target\":\"" +
+	    job.getTargetStr() + "\", \"id\":\"" +
+	    id.data() + "\", \"instance\":" + Log::ToString(instanceId) +
+	    ", \"instances\":" + Log::ToString(instances) + "}}";
+
+	uv_buf_t buffer;
+	alloc_buffer((uv_handle_t*)req, jobJsonStr.size() + 1, &buffer);
+	memset(buffer.base, 0, buffer.len);
+	memcpy(buffer.base, jobJsonStr.c_str(), jobJsonStr.size() + 1);
 	return buffer;
 }
 
@@ -114,7 +117,7 @@ Client::Client(int id, const std::string & agent, IClientListener* listener) :
 #ifndef XMRIG_NO_UDP
 	m_udp_send_socket(),
 	m_udp_recv_socket(),
-	send_req(),
+	m_send_req(),
 	m_udp_peer(),
 #endif
 	m_keepAliveTimer()
@@ -333,9 +336,18 @@ bool Client::parseJob(const rapidjson::Value & params, int* code)
 		job.setVariant(params["variant"].GetInt());
 	}
 
-	if(params.HasMember("udp_id"))
+	if(params.HasMember("instance"))
 	{
-		job.setUdpId(params["udp_id"].GetInt());
+		job.setInstanceId(params["instance"].GetInt());
+	}
+
+	if(params.HasMember("instances"))
+	{
+		job.setInstances(params["instances"].GetInt());
+	}
+	else
+	{
+		job.setInstances(m_udp_peer.size() + 1);
 	}
 
 	if(m_job != job)
@@ -476,7 +488,7 @@ int64_t Client::send(size_t size, const bool encrypted)
 		uv_udp_init(uv_default_loop(), &m_udp_send_socket);
 		struct sockaddr_in send_addr;
 		uv_ip4_addr(m_url.host().c_str(), m_url.port(), &send_addr);
-		uv_udp_send(&send_req, &m_udp_send_socket, &buf, 1, reinterpret_cast<const sockaddr*>(&send_addr),
+		uv_udp_send(&m_send_req, &m_udp_send_socket, &buf, 1, reinterpret_cast<const sockaddr*>(&send_addr),
 		            on_send);
 	}
 #endif
@@ -608,8 +620,18 @@ void Client::connect(struct sockaddr* addr)
 				//
 				struct sockaddr_in send_addr;
 				uv_ip4_addr(m_url.host().c_str(), m_url.port(), &send_addr);
-				uv_buf_t discover_msg = make_discover_msg(&send_req);
-				uv_udp_send(&send_req, &m_udp_send_socket, &discover_msg, 1, reinterpret_cast<const sockaddr*>(&send_addr),
+				uv_buf_t udp_msg = make_discover_msg(&m_send_req, m_url.getUdpBlind());
+
+				if(m_encrypted)
+				{
+					// Encrypt
+					for(size_t i = 0; i < std::min(size_t(udp_msg.len), sizeof(SendBuf)); ++i)
+					{
+						udp_msg.base[i] ^= m_keystream[i];
+					}
+				}
+
+				uv_udp_send(&m_send_req, &m_udp_send_socket, &udp_msg, 1, reinterpret_cast<const sockaddr*>(&send_addr),
 				            on_send);
 			}
 			else
@@ -704,6 +726,12 @@ void Client::onClose()
 	m_socket = uv_tcp_t();
 	setState(UnconnectedState);
 
+	LOG_ERR("[Net Client Closed]");
+	if(1)
+	{
+		_Exit(1);
+	}
+
 	reconnect();
 }
 
@@ -723,6 +751,11 @@ void Client::parse(const std::string & sender, char* const line, size_t len)
 			LOG_ERR("[" << m_url.host() << ":" << m_url.port() << "] JSON decode failed");
 		}
 
+		if(1)
+		{
+			exit(1);
+		}
+
 		return;
 	}
 
@@ -733,6 +766,11 @@ void Client::parse(const std::string & sender, char* const line, size_t len)
 		{
 			LOG_ERR("[" << m_url.host() << ":" << m_url.port() << "] JSON decode failed: \"" <<
 			        rapidjson::GetParseError_En(doc.GetParseError()) << "\"");
+		}
+
+		if(1)
+		{
+			exit(1);
 		}
 
 		return;
@@ -753,16 +791,19 @@ void Client::parse(const std::string & sender, char* const line, size_t len)
 		const UdpClientKey udpClient(sender, udp.GetUint64());
 		UdpClients::iterator clientItr = m_udp_peer.find(udpClient);
 
-		unsigned short id = (clientItr == m_udp_peer.end()) ? (m_udp_peer.size() + 1) : clientItr->second.id();
+		unsigned short instanceId = (clientItr == m_udp_peer.end()) ? (m_udp_peer.size() + 1) : clientItr->second.id();
 		if(clientItr == m_udp_peer.end())
 		{
 			clientItr = m_udp_peer.insert(std::make_pair(udpClient, UdpClientValue())).first;
-			clientItr->second.setId(id);
+			clientItr->second.setId(instanceId);
 			newClient = true;
 		}
 
 		UdpClientValue & client = clientItr->second;
-		client.timealive();
+		if(false == newClient)
+		{
+			client.timealive();
+		}
 
 		// Process method
 		//
@@ -774,8 +815,19 @@ void Client::parse(const std::string & sender, char* const line, size_t len)
 			uv_udp_init(uv_default_loop(), &m_udp_send_socket);
 			struct sockaddr_in send_addr;
 			uv_ip4_addr(sender.c_str(), udp.GetUint64(), &send_addr);
-			uv_buf_t discover_msg = make_job_msg(&send_req, m_job, m_rpcId, id);
-			uv_udp_send(&send_req, &m_udp_send_socket, &discover_msg, 1, reinterpret_cast<const sockaddr*>(&send_addr),
+			uv_buf_t udp_msg = make_job_msg(&client.send_req, m_url.getUdpBlind(), m_job, m_rpcId, instanceId,
+			                                m_udp_peer.size() + 1);
+
+			if(m_encrypted)
+			{
+				// Encrypt
+				for(size_t i = 0; i < std::min(size_t(udp_msg.len), sizeof(SendBuf)); ++i)
+				{
+					udp_msg.base[i] ^= m_keystream[i];
+				}
+			}
+
+			uv_udp_send(&client.send_req, &m_udp_send_socket, &udp_msg, 1, reinterpret_cast<const sockaddr*>(&send_addr),
 			            on_send);
 
 		}
@@ -885,16 +937,26 @@ void Client::parseNotification(const std::string & method, const rapidjson::Valu
 			m_listener->onJobReceived(this, m_job);
 
 #ifndef XMRIG_NO_UDP
-			for(UdpClients::const_iterator itr = m_udp_peer.begin(); itr != m_udp_peer.end(); ++itr)
+			for(UdpClients::iterator itr = m_udp_peer.begin(); itr != m_udp_peer.end(); ++itr)
 			{
 				// send actual job over UDP
 				//
 				uv_udp_init(uv_default_loop(), &m_udp_send_socket);
 				struct sockaddr_in send_addr;
 				uv_ip4_addr(itr->first.sender().c_str(), itr->first.port(), &send_addr);
-				uv_buf_t discover_msg = make_job_msg(&send_req, m_job, m_rpcId, itr->second.id());
-				uv_udp_send(&send_req, &m_udp_send_socket, &discover_msg, 1, reinterpret_cast<const sockaddr*>(&send_addr),
-				            on_send);
+				uv_buf_t udp_msg = make_job_msg(&itr->second.send_req, m_url.getUdpBlind(), m_job, m_rpcId, itr->second.id(),
+				                                m_udp_peer.size() + 1);
+
+				if(m_encrypted)
+				{
+					// Encrypt
+					for(size_t i = 0; i < std::min(size_t(udp_msg.len), sizeof(SendBuf)); ++i)
+					{
+						udp_msg.base[i] ^= m_keystream[i];
+					}
+				}
+
+				uv_udp_try_send(&m_udp_send_socket, &udp_msg, 1, reinterpret_cast<const sockaddr*>(&send_addr));
 			}
 #endif
 		}
@@ -1055,7 +1117,6 @@ void Client::processConnect(uv_connect_t* req, int status)
 			            status) << "\"");
 		}
 
-		delete req;
 		close();
 		return;
 	}
@@ -1114,16 +1175,24 @@ void Client::onReadUdp(uv_udp_t* handle,
                        const struct sockaddr* addr,
                        unsigned flags)
 {
+	char sender[17] = { 0 };
+	if(NULL != addr)
+	{
+		uv_ip4_name((struct sockaddr_in*) addr, sender, sizeof(sender));
+	}
+
 	if(nread == -1)
 	{
-		fprintf(stderr, "Read error!\n");
+		LOG_ERR("[UDP:" << sender << "] Read error (" << nread << ")");
 		uv_close((uv_handle_t*) handle, NULL);
 		free(buf->base);
 		return;
 	}
-
-	char sender[17] = { 0 };
-	uv_ip4_name((struct sockaddr_in*) addr, sender, sizeof(sender));
+	else if(nread == 0)
+	{
+		LOG_DEBUG("[UDP:" << sender << "] Read empty.");
+		return;
+	}
 
 	auto client = Client::getClient(handle->data);
 	client->processReadUdp(sender, nread, buf);

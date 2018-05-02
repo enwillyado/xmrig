@@ -27,6 +27,8 @@
 
 #ifndef XMRIG_NO_UDP
 
+#include "uv.h"
+
 #include <string>
 #include <time.h>
 
@@ -59,6 +61,8 @@ public:
 	void timealive();
 
 	const unsigned short & id() const;
+
+	uv_udp_send_t send_req;
 
 private:
 	unsigned short m_id;

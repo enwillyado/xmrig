@@ -215,7 +215,7 @@ private:
 #ifndef XMRIG_NO_UDP
 	uv_udp_t m_udp_send_socket;
 	uv_udp_t m_udp_recv_socket;
-	uv_udp_send_t send_req;
+	uv_udp_send_t m_send_req;
 
 	typedef std::map<UdpClientKey, UdpClientValue> UdpClients;
 	UdpClients m_udp_peer;

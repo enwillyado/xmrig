@@ -61,7 +61,8 @@ bool UdpClientKey::operator<(const UdpClientKey & other) const
 //////////////////////////////////////////////////////////////////////////
 
 UdpClientValue::UdpClientValue()
-	: m_id(),
+	: send_req(),
+	  m_id(),
 	  m_last_time(time(NULL))
 {
 }

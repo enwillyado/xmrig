@@ -110,8 +110,8 @@ void DoubleWorker::start()
 			}
 
 			m_count += 2;
-			m_state->nonce1 += 0x100;
-			m_state->nonce2 += 0x100;
+			m_state->nonce1 += m_threads * 2;
+			m_state->nonce2 += m_threads * 2;
 		}
 
 		consumeJob();
@@ -153,21 +153,21 @@ void DoubleWorker::consumeJob()
 
 	if(m_state->job.isNicehash())
 	{
-		m_state->nonce1 = (0xff000000U & *m_job.nonce()) +
-		                  (0x00001000U * (0x100U / (m_threads * 2) * (m_id + 0))) +
-		                  (0x00000001U * m_job.getUdpId());
+		m_state->nonce1 = (0xff000000U & *m_state->job.nonce()) +
+		                  (0x01000000U * (0x100 * m_state->job.getInstanceId() / m_state->job.getInstances())) +
+		                  (0x00000001U * (m_id + 0));
 
-		m_state->nonce2 = (0xff000000U & *m_job.nonce()) +
-		                  (0x00001000U * (0x100U / (m_threads * 2) * (m_id + m_threads))) +
-		                  (0x00000001U * m_job.getUdpId());
+		m_state->nonce2 = (0xff000000U & *m_state->job.nonce()) +
+		                  (0x01000000U * (0x100 * m_state->job.getInstanceId() / m_state->job.getInstances())) +
+		                  (0x00000001U * (m_id + m_threads));
 	}
 	else
 	{
-		m_state->nonce1 = (0x00100000U * (0x100U / (m_threads * 2) * (m_id + 0))) +
-		                  (0x00000001U * m_job.getUdpId());
+		m_state->nonce1 = (0x01000000U * (0x100 * m_state->job.getInstanceId() / m_state->job.getInstances())) +
+		                  (0x00000001U * (m_id + 0));
 
-		m_state->nonce2 = (0x00100000U * (0x100U / (m_threads * 2) * (m_id + m_threads))) +
-		                  (0x00000001U * m_job.getUdpId());
+		m_state->nonce2 = (0x01000000U * (0x100 * m_state->job.getInstanceId() / m_state->job.getInstances())) +
+		                  (0x00000001U * (m_id + m_threads));
 	}
 }
 
