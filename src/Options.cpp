@@ -376,6 +376,12 @@ Options::Options(int argc, char** argv) :
 		}
 	}
 
+	if(m_doubleHash && m_algoVariant != AV2_AESNI_DOUBLE && m_algoVariant != AV4_SOFT_AES_DOUBLE)
+	{
+		fprintf(stdout, "Double!\n");
+		m_algoVariant += 1;
+	}
+
 	adjust();
 
 	m_ready = true;

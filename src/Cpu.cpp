@@ -38,8 +38,7 @@ int Cpu::m_sockets       = 1;
 int Cpu::m_totalCores    = 0;
 int Cpu::m_totalThreads  = 0;
 
-
-int Cpu::optimalThreadsCount(int algo, bool doubleHash, int maxCpuUsage)
+int Cpu::optimalThreadsCount(int algo, bool &doubleHash, int maxCpuUsage)
 {
 	if(m_totalThreads == 1)
 	{
@@ -76,6 +75,14 @@ int Cpu::optimalThreadsCount(int algo, bool doubleHash, int maxCpuUsage)
 	if(((float) count / m_totalThreads * 100) > maxCpuUsage)
 	{
 		count = (int) ceil((float) m_totalThreads * (maxCpuUsage / 100.0));
+	}
+
+	if(false == doubleHash)
+	{
+		if(cache >= size * count * 2)
+		{
+			doubleHash = true;
+		}
 	}
 
 	return count < 1 ? 1 : count;

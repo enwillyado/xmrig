@@ -38,7 +38,7 @@ public:
 		BMI2   = 4
 	};
 
-	static int optimalThreadsCount(int algo, bool doubleHash, int maxCpuUsage);
+	static int optimalThreadsCount(int algo, bool & doubleHash, int maxCpuUsage);
 	static void init();
 	static void setAffinity(int id, uint64_t mask);
 
