@@ -243,8 +243,10 @@ void ApiState::getMiner(rapidjson::Document & doc) const
 	doc.AddMember("algo",         rapidjson::StringRef(Options::i()->algoName()), allocator);
 	doc.AddMember("hugepages",    Mem::isHugepagesEnabled(), allocator);
 
+#ifndef XMRIG_NO_DONATE
 	doc.AddMember("donate_minutes_per_cicle",  Options::i()->donateMinutes(), allocator);
 	doc.AddMember("minutes_per_cicle", Options::i()->minutesInCicle(), allocator);
+#endif
 }
 
 

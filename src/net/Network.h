@@ -67,7 +67,11 @@ private:
 	static void onTick(uv_timer_t* handle);
 
 	const Options* m_options;
+
+#ifndef XMRIG_NO_DONATE
 	DonateStrategy* m_donate;
+#endif
+
 	IStrategy* m_strategy;
 	NetworkState m_state;
 	uv_timer_t m_timer;

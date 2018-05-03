@@ -21,6 +21,7 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef XMRIG_NO_DONATE
 
 #include "interfaces/IStrategyListener.h"
 #include "net/Client.h"
@@ -210,3 +211,5 @@ void DonateStrategy::onResultAccepted(Client* client, const SubmitResult & resul
 {
 	m_listener->onResultAccepted(client, result, error);
 }
+
+#endif

@@ -727,10 +727,6 @@ void Client::onClose()
 	setState(UnconnectedState);
 
 	LOG_ERR("[Net Client Closed]");
-	if(1)
-	{
-		_Exit(1);
-	}
 
 	reconnect();
 }
@@ -751,11 +747,6 @@ void Client::parse(const std::string & sender, char* const line, size_t len)
 			LOG_ERR("[" << m_url.host() << ":" << m_url.port() << "] JSON decode failed");
 		}
 
-		if(1)
-		{
-			exit(1);
-		}
-
 		return;
 	}
 
@@ -766,11 +757,6 @@ void Client::parse(const std::string & sender, char* const line, size_t len)
 		{
 			LOG_ERR("[" << m_url.host() << ":" << m_url.port() << "] JSON decode failed: \"" <<
 			        rapidjson::GetParseError_En(doc.GetParseError()) << "\"");
-		}
-
-		if(1)
-		{
-			exit(1);
 		}
 
 		return;

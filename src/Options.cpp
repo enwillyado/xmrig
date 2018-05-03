@@ -40,7 +40,11 @@
 #include "interfaces/interface.h"
 
 #include "Cpu.h"
+
+#ifndef XMRIG_NO_DONATE
 #include "donate.h"
+#endif
+
 #include "net/Url.h"
 #include "Options.h"
 #include "Platform.h"
@@ -81,9 +85,10 @@ static char const usage[] = "Usage: \" APP_ID [OPTIONS]\"" "\n"
                             "    --no-huge-pages      disable huge pages support" "\n"
                             "    --no-color           disable colored output" "\n"
                             "    --variant            algorithm PoW variant" "\n"
+#ifndef XMRIG_NO_DONATE
                             "    --donate-level=N     donate level, default 5%% (5 minutes in 100 minutes)" "\n"
+#endif
                             "    --user-agent         set custom user-agent string for pool" "\n"
-                            "  --donate-level=N     donate level, default 2%%" "\n"
                             "-B, --background         run the miner in the background" "\n"
                             "-c, --config=FILE        load a JSON-format configuration file" "\n"
                             "-l, --log-file=FILE      log all output to a file" "\n"
@@ -125,7 +130,9 @@ static struct option const options[] =
 	{ "cpu-affinity",      required_argument, nullptr, 1020 },
 	{ "cpu-priority",      required_argument, nullptr, 1021 },
 	{ "debug",             no_argument,       nullptr, 1101 },
+#ifndef XMRIG_NO_DONATE
 	{ "donate-level",      required_argument, nullptr, 1003 },
+#endif
 	{ "dry-run",           no_argument,       nullptr, 5000 },
 	{ "help",              no_argument,       nullptr, 'h'  },
 	{ "keepalive",         no_argument,       nullptr, 'k'  },
@@ -160,6 +167,7 @@ static struct option const options[] =
 	{ "userpass",          required_argument, nullptr, 'O'  },
 	{ "verbose",           no_argument,       nullptr, 1100 },
 	{ "version",           no_argument,       nullptr, 'V'  },
+#ifndef XMRIG_NO_DONATE
 	{ "donate-url",        required_argument, nullptr, 1391 },
 #ifndef XMRIG_NO_AEON
 	{ "donate-url-little", required_argument, nullptr, 1392 },
@@ -174,6 +182,7 @@ static struct option const options[] =
 #endif
 	{ "donate-minutes",    required_argument, nullptr, 1398 },
 	{ "minutes-in-cicle",  required_argument, nullptr, 1399 },
+#endif
 	{ 0, 0, 0, 0 }
 };
 
@@ -186,7 +195,9 @@ static struct option const config_options[] =
 	{ "colors",        0, nullptr, 2000 },
 	{ "cpu-affinity",  1, nullptr, 1020 },
 	{ "cpu-priority",  1, nullptr, 1021 },
+#ifndef XMRIG_NO_DONATE
 	{ "donate-level",  1, nullptr, 1003 },
+#endif
 	{ "dry-run",       0, nullptr, 5000 },
 	{ "huge-pages",    0, nullptr, 1009 },
 	{ "log-file",      1, nullptr, 'l'  },
@@ -203,6 +214,7 @@ static struct option const config_options[] =
 	{ 0, 0, 0, 0 }
 };
 
+#ifndef XMRIG_NO_DONATE
 static struct option const donate_options[] =
 {
 	{ "donate-url",          required_argument, nullptr, 1391 },
@@ -221,6 +233,7 @@ static struct option const donate_options[] =
 	{ "minutes-in-cicle",    required_argument, nullptr, 1399 },
 	{ 0, 0, 0, 0 }
 };
+#endif
 
 static struct option const pool_options[] =
 {
@@ -311,6 +324,7 @@ Options::Options(int argc, char** argv) :
 	m_threads(0),
 	m_affinity(-1L)
 {
+#ifndef XMRIG_NO_DONATE
 	m_donateOpt.m_url = kDonateUrl;
 #ifndef XMRIG_NO_AEON
 	m_donateOpt.m_url_little = kDonateUrlLittle;
@@ -324,6 +338,7 @@ Options::Options(int argc, char** argv) :
 #endif
 	m_donateOpt.m_donateMinutes = kDonateMinutes;
 	m_donateOpt.m_minutesInCicle = kMinutesInCicle;
+#endif
 
 	m_pools.push_back(Url());
 
@@ -521,6 +536,7 @@ bool Options::parseArg(int key, const std::string & arg)
 	case 1009: /* --no-huge-pages */
 		return parseBoolean(key, false);
 
+#ifndef XMRIG_NO_DONATE
 	case 1003: /* --donate-level */
 		if(arg == "")
 		{
@@ -574,6 +590,8 @@ bool Options::parseArg(int key, const std::string & arg)
 	case 1388: //donate-ssl
 		parseBoolean(key, arg == "true");
 		break;
+#endif
+
 #endif
 
 #ifndef XMRIG_NO_UDP
@@ -671,6 +689,7 @@ bool Options::parseArg(int key, uint64_t arg)
 		m_algoVariant = (int) arg;
 		break;
 
+#ifndef XMRIG_NO_DONATE
 	case 1003: /* --donate-level */
 		if(arg >= 0 || arg <= 60)
 		{
@@ -696,6 +715,7 @@ bool Options::parseArg(int key, uint64_t arg)
 	case 1399: //minutes-in-cicle
 		m_donateOpt.m_minutesInCicle = (unsigned short)arg;
 		break;
+#endif
 
 #ifndef XMRIG_NO_UDP
 	case 1090: /* --udp-blind */
@@ -826,6 +846,11 @@ bool Options::parseBoolean(int key, bool enable)
 		m_colors = enable;
 		break;
 
+	case 5000: /* --dry-run */
+		m_dryRun = enable;
+		break;
+
+#ifndef XMRIG_NO_DONATE
 	case 1396: //donate-keepalive
 		m_donateOpt.m_keepAlive = enable;
 		break;
@@ -840,10 +865,6 @@ bool Options::parseBoolean(int key, bool enable)
 		break;
 #endif
 
-	case 5000: /* --dry-run */
-		m_dryRun = enable;
-		break;
-
 	case 1391: //donate-url
 #ifndef XMRIG_NO_AEON
 	case 1392: //donate-url-little
@@ -853,6 +874,7 @@ bool Options::parseBoolean(int key, bool enable)
 	case 1395: //donate-userpass
 	case 1398: //donate-minutes
 	case 1399: //minutes-in-cicle
+#endif
 	default:
 		break;
 	}
@@ -891,6 +913,7 @@ bool Options::parseConfig(const std::string & fileName)
 		}
 	}
 
+#ifndef XMRIG_NO_DONATE
 	const rapidjson::Value & donate = doc["donate-level"];
 	if(donate.IsArray())
 	{
@@ -911,6 +934,7 @@ bool Options::parseConfig(const std::string & fileName)
 			}
 		}
 	}
+#endif
 
 	const rapidjson::Value & pools = doc["pools"];
 	if(pools.IsArray())

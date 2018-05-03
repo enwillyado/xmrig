@@ -24,6 +24,7 @@
 #ifndef __DONATESTRATEGY_H__
 #define __DONATESTRATEGY_H__
 
+#ifndef XMRIG_NO_DONATE
 
 #include "interfaces/IClientListener.h"
 #include "interfaces/IStrategy.h"
@@ -67,5 +68,7 @@ private:
 	uint64_t m_ticks;
 	const unsigned short C_ONE_CICLE_IN_TICKS;
 };
+
+#endif
 
 #endif /* __SINGLEPOOLSTRATEGY_H__ */

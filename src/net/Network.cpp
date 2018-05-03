@@ -34,7 +34,11 @@
 #include "log/Log.h"
 #include "net/Client.h"
 #include "net/Network.h"
+
+#ifndef XMRIG_NO_DONATE
 #include "net/strategies/DonateStrategy.h"
+#endif
+
 #include "net/strategies/FailoverStrategy.h"
 #include "net/strategies/SinglePoolStrategy.h"
 #include "net/SubmitResult.h"
@@ -46,7 +50,12 @@
 
 Network::Network(const Options* options) :
 	m_options(options),
-	m_donate(nullptr)
+#ifndef XMRIG_NO_DONATE
+	m_donate(nullptr),
+#endif
+	m_strategy(nullptr),
+	m_state(),
+	m_timer()
 {
 	srand(time(0) ^ (uintptr_t) this);
 
@@ -63,10 +72,12 @@ Network::Network(const Options* options) :
 		m_strategy = new SinglePoolStrategy(pools.front(), Platform::userAgent(), this);
 	}
 
+#ifndef XMRIG_NO_DONATE
 	if(m_options->donateMinutes() > 0)
 	{
 		m_donate = new DonateStrategy(Platform::userAgent(), this);
 	}
+#endif
 
 	m_timer.data = this;
 	uv_timer_init(uv_default_loop(), &m_timer);
@@ -88,10 +99,12 @@ void Network::connect()
 
 void Network::stop()
 {
+#ifndef XMRIG_NO_DONATE
 	if(m_donate)
 	{
 		m_donate->stop();
 	}
+#endif
 
 	m_strategy->stop();
 }
@@ -124,10 +137,12 @@ void Network::onJob(Client* client, const Job & job)
 		LOG_INFO("new job from " << client->host() << ":" << client->port() << " diff " << job.diff());
 	}
 
+#ifndef XMRIG_NO_DONATE
 	if(m_donate && m_donate->reschedule(client->id() == -1))
 	{
 		return;
 	}
+#endif
 
 	setJob(client, job);
 }
@@ -135,11 +150,13 @@ void Network::onJob(Client* client, const Job & job)
 
 void Network::onJobResult(const JobResult & result)
 {
+#ifndef XMRIG_NO_DONATE
 	if(result.poolId == -1 && m_donate)
 	{
 		m_donate->submit(result);
 		return;
 	}
+#endif
 
 	m_strategy->submit(result);
 
@@ -149,10 +166,12 @@ void Network::onJobResult(const JobResult & result)
 
 void Network::onPause(IStrategy* strategy)
 {
+#ifndef XMRIG_NO_DONATE
 	if(m_donate && m_donate == strategy)
 	{
 		m_strategy->resume();
 	}
+#endif
 
 	if(!m_strategy->isActive())
 	{
@@ -217,10 +236,12 @@ void Network::tick()
 
 	m_strategy->tick(now);
 
+#ifndef XMRIG_NO_DONATE
 	if(m_donate)
 	{
 		m_donate->tick(now);
 	}
+#endif
 
 #   ifndef XMRIG_NO_API
 	Api::tick(m_state);

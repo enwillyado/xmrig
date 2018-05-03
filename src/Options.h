@@ -137,6 +137,8 @@ public:
 	{
 		return m_apiPort;
 	}
+
+#ifndef XMRIG_NO_DONATE
 	inline unsigned short donateMinutes() const
 	{
 		return m_donateOpt.m_donateMinutes;
@@ -149,6 +151,8 @@ public:
 	{
 		return m_donateOpt;
 	}
+#endif
+
 	inline int printTime() const
 	{
 		return m_printTime;
@@ -218,6 +222,7 @@ private:
 	bool setAlgo(const std::string & algo);
 
 	int getAlgoVariant() const;
+
 #   ifndef XMRIG_NO_AEON
 	int getAlgoVariantLite() const;
 #   endif
@@ -247,7 +252,10 @@ private:
 	int m_threads;
 	int64_t m_affinity;
 	std::vector<Url> m_pools;
+
+#ifndef XMRIG_NO_DONATE
 	Donate m_donateOpt;
+#endif
 };
 
 #endif /* __OPTIONS_H__ */

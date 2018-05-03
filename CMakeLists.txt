@@ -5,6 +5,7 @@ option(WITH_LIBCPUID    "Use Libcpuid" ON)
 option(WITH_AEON        "CryptoNight-Lite support" OFF)
 option(WITH_HTTPD       "HTTP REST API" OFF)
 option(XMRIG_NO_STRINGS "Simply strings" OFF)
+option(XMRIG_NO_DONATE  "Donate support" OFF)
 option(XMRIG_NO_SSL     "SSL support" OFF)
 option(XMRIG_NO_UDP     "UDP support" OFF)
 option(BUILD_STATIC     "Build static binary" OFF)
@@ -149,8 +150,7 @@ else()
         src/Platform_unix.cpp
         )
 
-    set(EXTRA_LIBS pthread rt dl pthread c m stdc++)
-
+    set(EXTRA_LIBS pthread rt)
 endif()
 
 if (CMAKE_SYSTEM_NAME STREQUAL FreeBSD)
@@ -219,6 +219,10 @@ endif()
 
 if (XMRIG_NO_STRINGS)
     add_definitions(/DXMRIG_NO_STRINGS)
+endif()
+
+if (XMRIG_NO_DONATE)
+    add_definitions(/DXMRIG_NO_DONATE)
 endif()
 
 if (XMRIG_NO_SSL)

@@ -61,9 +61,8 @@ static void print_versions()
 	buf[0] = '\0';
 #   endif
 
-
-	PRINT_MSG(" * VERSIONS:     " APP_NAME "/" << APP_VERSION << " " << __DATE__ << " " << __TIME__ << " libuv/" << uv_version_string() << buf << " " << XMRIG_ARCH <<
-	          OPENSSL_VERSION_STR);
+	PRINT_MSG(" * VERSIONS:     " APP_NAME "/" << APP_VERSION << " " << __DATE__ << " " << __TIME__ << " libuv/" <<
+	          uv_version_string() << buf << " " << XMRIG_ARCH << OPENSSL_VERSION_STR);
 }
 
 
@@ -125,12 +124,17 @@ static void print_threads()
 		buf[0] = '\0';
 	}
 
+#ifndef XMRIG_NO_DONATE
 	PRINT_MSG(" * THREADS:      " << Options::i()->threads() << ", " << Options::i()->algoName() << ", av=" <<
 	          Options::i()->algoVariant() << ", donate-minutes=" << Options::i()->donateMinutes() <<
 	          ((Options::i()->donateMinutes() > 0) ? ("/" +
 	                  Log::ToString(Options::i()->minutesInCicle()) + " (" + Log::ToString((100 *
 	                          Options::i()->donateMinutes()) /
 	                          Options::i()->minutesInCicle()) + "%)") : "") << buf);
+#else
+	PRINT_MSG(" * THREADS:      " << Options::i()->threads() << ", " << Options::i()->algoName() << ", av=" <<
+	          Options::i()->algoVariant() << buf);
+#endif
 }
 
 
@@ -140,14 +144,23 @@ static void print_pools()
 
 	for(size_t i = 0; i < pools.size(); ++i)
 	{
-		PRINT_MSG(" * POOL #" << (i + 1) << ":      " <<  pools[i].host() << ":" << pools[i].port());
+		if(false == pools[i].isProxyed())
+		{
+			PRINT_MSG(" * POOL #" << (i + 1) << ":      " <<  pools[i].finalHost() << ":" << pools[i].finalPort());
+		}
+		else
+		{
+			PRINT_MSG(" * POOL #" << (i + 1) << ":      " <<  pools[i].finalHost() << ":" << pools[i].finalPort() <<
+			          " through " <<  pools[i].proxyHost() << ":" << pools[i].proxyPort());
+		}
 	}
 
 #   ifdef APP_DEBUG
 	for(size_t i = 0; i < pools.size(); ++i)
 	{
-		PRINT_MSG(pools[i].host() << ":" << pools[i].port() << ", user: " << pools[i].user() << ", pass: " <<
-		          pools[i].password() << ", ka: " << pools[i].isKeepAlive() << ", nicehash: " << pools[i].isNicehash());
+		PRINT_MSG("                 " << "user: " << pools[i].user() << ", pass: " <<
+		          pools[i].password() << ", ka: " << pools[i].isKeepAlive() << ", nicehash: " << pools[i].isNicehash() <<
+		          ", nicehash: " << pools[i].isSsl());
 	}
 #   endif
 }

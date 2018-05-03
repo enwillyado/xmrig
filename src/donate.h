@@ -24,6 +24,7 @@
 #ifndef __DONATE_H__
 #define __DONATE_H__
 
+#ifndef XMRIG_NO_DONATE
 
 /*
  * Dev donation.
@@ -56,5 +57,7 @@ static const char* kDonateUrlLittle = "fee.xmrig.com:3333";
 #endif
 static const char* kDonateUser = "";
 static const char* kDonatePass = "x";
+
+#endif
 
 #endif /* __DONATE_H__ */
