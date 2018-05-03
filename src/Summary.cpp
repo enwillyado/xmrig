@@ -62,8 +62,7 @@ static void print_versions()
 #   endif
 
 
-	PRINT_MSG(" * VERSIONS:     " APP_NAME "/" << APP_VERSION << " " << __DATE__ __TIME__ << " libuv/" <<
-	          uv_version_string() << buf << " " << XMRIG_ARCH <<
+	PRINT_MSG(" * VERSIONS:     " APP_NAME "/" << APP_VERSION << " " << __DATE__ << " " << __TIME__ << " libuv/" << uv_version_string() << buf << " " << XMRIG_ARCH <<
 	          OPENSSL_VERSION_STR);
 }
 
