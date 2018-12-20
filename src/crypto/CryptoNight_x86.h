@@ -333,28 +333,6 @@ static inline void cn_implode_scratchpad(const __m128i* input, __m128i* output)
 }
 
 
-static inline __m128i int_sqrt_v2(const uint64_t n0)
-{
-	__m128d x = _mm_castsi128_pd(_mm_add_epi64(_mm_cvtsi64_si128(n0 >> 12), _mm_set_epi64x(0, 1023ULL << 52)));
-	x = _mm_sqrt_sd(_mm_setzero_pd(), x);
-	uint64_t r = static_cast<uint64_t>(_mm_cvtsi128_si64(_mm_castpd_si128(x)));
-
-	const uint64_t s = r >> 20;
-	r >>= 19;
-
-	uint64_t x2 = (s - (1022ULL << 32)) * (r - s - (1022ULL << 32) + 1);
-#   if (_MSC_VER > 1600 || __GNUC__ > 7 || (__GNUC__ == 7 && __GNUC_MINOR__ > 1)) && (defined(__x86_64__) || defined(_M_AMD64))
-	_addcarry_u64(_subborrow_u64(0, x2, n0, (unsigned long long int*)&x2), r, 0, (unsigned long long int*)&r);
-#   else
-	if(x2 < n0)
-	{
-		++r;
-	}
-#   endif
-
-	return _mm_cvtsi64_si128(r);
-}
-
 #if ! defined _WIN64  && defined _WIN32
 #if defined(_MSC_VER) && _MSC_VER < 1900
 static inline __m128i _mm_set_epi64x(const uint64_t __a, const uint64_t __b)
@@ -369,7 +347,7 @@ static inline __m128i _mm_set_epi64x(const uint64_t __a, const uint64_t __b)
 
 template<xmrig::Variant VARIANT>
 static inline void cryptonight_monero_tweak(uint64_t* mem_out, const uint8_t* l, uint64_t idx, __m128i ax0,
-        __m128i bx0, __m128i bx1, __m128i cx)
+        __m128i bx0, __m128i bx1, const __m128i & cx)
 {
 	if(VARIANT == xmrig::VARIANT_V2)
 	{

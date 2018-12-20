@@ -60,16 +60,75 @@
 		(p) ^= tweak1_2_##part; \
 	}
 
-#   define VARIANT2_INIT(part) \
-	__m128i division_result_xmm_##part = _mm_cvtsi64_si128(h##part[12]); \
-	__m128i sqrt_result_xmm_##part = _mm_cvtsi64_si128(h##part[13]);
-
 #ifdef _MSC_VER
 #include <float.h>
 #   define VARIANT2_SET_ROUNDING_MODE() if (VARIANT == xmrig::VARIANT_V2) { _control87(RC_DOWN, MCW_RC); }
 #else
 #   define VARIANT2_SET_ROUNDING_MODE() if (VARIANT == xmrig::VARIANT_V2) { fesetround(FE_DOWNWARD); }
 #endif
+
+#if ! defined _WIN64  && defined _WIN32
+
+/* this one was not implemented yet so here it is */
+#if  defined(_MSC_VER) && _MSC_VER < 1900
+static inline uint64_t _mm_cvtsi128_si64(__m128i a)
+{
+	return a.m128i_i64[0];
+}
+#else
+#include <math.h>
+static inline uint64_t _mm_cvtsi128_si64(__m128i a)
+{
+	return static_cast<uint64_t>(a[0]);
+}
+#endif
+
+#   define VARIANT2_INIT(part) \
+	uint64_t division_result_##part = h##part[12]; \
+	uint64_t sqrt_result_##part = h##part[13];
+
+#   define VARIANT2_INTEGER_MATH(part, cl, cx) \
+	do { \
+		const uint64_t cx_0 = _mm_cvtsi128_si64(cx); \
+		cl ^= division_result_##part ^ (sqrt_result_##part << 32); \
+		const uint32_t d = static_cast<uint32_t>(0xFFFFFFFF & (cx_0 + (sqrt_result_##part << 1))) | 0x80000001UL; \
+		const uint64_t cx_1 = _mm_cvtsi128_si64(_mm_srli_si128(cx, 8)); \
+		division_result_##part = static_cast<uint32_t>(0xFFFFFFFF & (cx_1 / d)) + ((cx_1 % d) << 32); \
+		const uint64_t sqrt_input = cx_0 + division_result_##part; \
+		sqrt_result_##part = sqrt(sqrt_input + 18446744073709551616.0) * 2.0 - 8589934592.0; \
+		const uint64_t s = sqrt_result_##part >> 1; \
+		const uint64_t b = sqrt_result_##part & 1; \
+		const uint64_t r2 = (uint64_t)(s) * (s + b) + (sqrt_result_##part << 32); \
+		sqrt_result_##part += ((r2 + b > sqrt_input) ? -1 : 0) + ((r2 + (1ULL << 32) < sqrt_input - s) ? 1 : 0); \
+	} while (0)
+
+#else
+
+#   define VARIANT2_INIT(part) \
+	__m128i division_result_xmm_##part = _mm_cvtsi64_si128(h##part[12]); \
+	__m128i sqrt_result_xmm_##part = _mm_cvtsi64_si128(h##part[13]);
+
+static inline __m128i int_sqrt_v2(const uint64_t n0)
+{
+	__m128d x = _mm_castsi128_pd(_mm_add_epi64(_mm_cvtsi64_si128(n0 >> 12), _mm_set_epi64x(0, 1023ULL << 52)));
+	x = _mm_sqrt_sd(_mm_setzero_pd(), x);
+	uint64_t r = static_cast<uint64_t>(_mm_cvtsi128_si64(_mm_castpd_si128(x)));
+
+	const uint64_t s = r >> 20;
+	r >>= 19;
+
+	uint64_t x2 = (s - (1022ULL << 32)) * (r - s - (1022ULL << 32) + 1);
+#   if (_MSC_VER > 1600 || __GNUC__ > 7 || (__GNUC__ == 7 && __GNUC_MINOR__ > 1)) && (defined(__x86_64__) || defined(_M_AMD64))
+	_addcarry_u64(_subborrow_u64(0, x2, n0, (unsigned long long int*)&x2), r, 0, (unsigned long long int*)&r);
+#   else
+	if(x2 < n0)
+	{
+		++r;
+	}
+#   endif
+
+	return _mm_cvtsi64_si128(r);
+}
 
 #   define VARIANT2_INTEGER_MATH(part, cl, cx) \
 	do { \
@@ -82,6 +141,7 @@
 		division_result_xmm_##part = _mm_cvtsi64_si128(static_cast<int64_t>(division_result)); \
 		sqrt_result_xmm_##part = int_sqrt_v2(cx_0 + division_result); \
 	} while (0)
+#endif
 
 #   define VARIANT2_SHUFFLE(base_ptr, offset, _a, _b, _b1) \
 	do { \
