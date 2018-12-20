@@ -40,13 +40,13 @@ struct option;
 class Options
 {
 public:
-	enum AlgoVariant
+	enum AlgoVia
 	{
-		AV0_AUTO,
-		AV1_AESNI,
-		AV2_AESNI_DOUBLE,
-		AV3_SOFT_AES,
-		AV4_SOFT_AES_DOUBLE,
+		AV0_AUTO = 0,
+		AV1_AESNI = 1,
+		AV2_AESNI_DOUBLE = 2,
+		AV3_SOFT_AES = 3,
+		AV4_SOFT_AES_DOUBLE = 4,
 		AV_MAX
 	};
 
@@ -130,9 +130,9 @@ public:
 	{
 		return m_algo;
 	}
-	inline int algoVariant() const
+	inline Options::AlgoVia algoVia() const
 	{
-		return m_algoVariant;
+		return m_algoVia;
 	}
 	inline int apiPort() const
 	{
@@ -222,10 +222,10 @@ private:
 
 	bool setAlgo(const std::string & algo);
 
-	int getAlgoVariant() const;
+	Options::AlgoVia getAlgoVia() const;
 
 #   ifndef XMRIG_NO_AEON
-	int getAlgoVariantLite() const;
+	Options::AlgoVia getAlgoViaLite() const;
 #   endif
 
 	bool m_background;
@@ -243,7 +243,7 @@ private:
 	std::string m_logFile;
 	std::string m_userAgent;
 	xmrig::Algo m_algo;
-	int m_algoVariant;
+	Options::AlgoVia m_algoVia;
 	int m_apiPort;
 	int m_maxCpuUsage;
 	int m_printTime;

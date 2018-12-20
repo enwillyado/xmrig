@@ -28,6 +28,7 @@
 
 #include <string>
 
+#include "xmrig.h"
 #include "interfaces/interface.h"
 
 class Url
@@ -54,7 +55,8 @@ public:
 	Url(const std::string & url);
 	Url(const std::string & host, uint16_t port, const std::string & user = "",
 	    const std::string & password = "",
-	    bool keepAlive = false, bool nicehash = false, bool ssl = false, int variant = -1);
+	    bool keepAlive = false, bool nicehash = false, bool ssl = false,
+	    const xmrig::Variant variant = xmrig::VARIANT_AUTO);
 	~Url();
 
 	inline bool isKeepAlive() const
@@ -85,11 +87,11 @@ public:
 	{
 		return m_user.empty() ? DefaultUser() : m_user;
 	}
-	inline int algo() const
+	inline const xmrig::Algo algo() const
 	{
 		return m_algo;
 	}
-	inline int variant() const
+	inline const xmrig::Variant variant() const
 	{
 		return m_variant;
 	}
@@ -147,8 +149,7 @@ public:
 		m_keepAlive = keepAlive;
 	}
 
-	void setVariant(bool monero);
-	void setVariant(int variant);
+	void setVariant(const xmrig::Variant variant);
 
 	inline void setNicehash(bool nicehash)
 	{
@@ -175,7 +176,7 @@ public:
 
 	bool parse(const std::string & url);
 	bool setUserpass(const std::string & userpass);
-	void adjust(int algo);
+	void adjust(const xmrig::Algo algo);
 	void setPassword(const std::string & password);
 	void setUser(const std::string & user);
 	void copyKeystream(char* keystreamDest, const size_t keystreamLen) const;
@@ -193,8 +194,8 @@ private:
 	std::string m_host;
 	std::string m_password;
 	std::string m_user;
-	int m_algo;
-	int m_variant;
+	xmrig::Algo m_algo;
+	xmrig::Variant m_variant;
 	uint16_t m_port;
 	std::string m_proxy_host;
 	uint16_t m_proxy_port;

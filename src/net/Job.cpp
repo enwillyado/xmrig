@@ -78,7 +78,7 @@ Job::Job() :
 }
 
 
-Job::Job(int poolId, bool nicehash, int algo, int variant) :
+Job::Job(int poolId, bool nicehash, const xmrig::Algo algo, const xmrig::Variant variant) :
 	m_nicehash(nicehash),
 	m_instanceId(0),
 	m_instances(0),
@@ -198,13 +198,14 @@ void Job::setCoin(const std::string & coin)
 }
 
 
-void Job::setVariant(int variant)
+void Job::setVariant(const xmrig::Variant variant)
 {
 	switch(variant)
 	{
 	case xmrig::VARIANT_AUTO:
 	case xmrig::VARIANT_NONE:
 	case xmrig::VARIANT_V1:
+	case xmrig::VARIANT_V2:
 		m_variant = variant;
 		break;
 

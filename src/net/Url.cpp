@@ -97,7 +97,7 @@ Url::Url(const std::string & host,
          bool keepAlive,
          bool ssl,
          bool nicehash,
-         int variant)
+         xmrig::Variant variant)
 	: m_keepAlive(keepAlive),
 	  m_nicehash(nicehash),
 #ifndef XMRIG_NO_SSL
@@ -241,7 +241,7 @@ bool Url::setUserpass(const std::string & userpass)
 	return true;
 }
 
-void Url::adjust(int algo)
+void Url::adjust(const xmrig::Algo algo)
 {
 	if(!isValid())
 	{
@@ -384,18 +384,14 @@ void Url::setUser(const std::string & user)
 	m_user = replaceWithTokens(user);
 }
 
-void Url::setVariant(bool monero)
-{
-	m_variant = monero;
-}
-
-void Url::setVariant(int variant)
+void Url::setVariant(const xmrig::Variant variant)
 {
 	switch(variant)
 	{
 	case xmrig::VARIANT_AUTO:
 	case xmrig::VARIANT_NONE:
 	case xmrig::VARIANT_V1:
+	case xmrig::VARIANT_V2:
 		m_variant = variant;
 		break;
 

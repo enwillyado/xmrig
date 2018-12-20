@@ -126,14 +126,14 @@ static void print_threads()
 
 #ifndef XMRIG_NO_DONATE
 	PRINT_MSG(" * THREADS:      " << Options::i()->threads() << ", " << Options::i()->algoName() << ", av=" <<
-	          Options::i()->algoVariant() << ", donate-minutes=" << Options::i()->donateMinutes() <<
+	          Options::i()->algoVia() << ", donate-minutes=" << Options::i()->donateMinutes() <<
 	          ((Options::i()->donateMinutes() > 0) ? ("/" +
 	                  Log::ToString(Options::i()->minutesInCicle()) + " (" + Log::ToString((100 *
 	                          Options::i()->donateMinutes()) /
 	                          Options::i()->minutesInCicle()) + "%)") : "") << buf);
 #else
 	PRINT_MSG(" * THREADS:      " << Options::i()->threads() << ", " << Options::i()->algoName() << ", av=" <<
-	          Options::i()->algoVariant() << buf);
+	          Options::i()->algoVia() << buf);
 #endif
 }
 

@@ -127,7 +127,7 @@ int App::exec()
 
 	background();
 
-	if(!CryptoNight::init(m_options->algo(), m_options->algoVariant()))
+	if(!CryptoNight::init(m_options->algo(), m_options->algoVia()))
 	{
 		LOG_ERR("\"" << m_options->algoName() << "\" hash self-test failed.");
 		return 1;

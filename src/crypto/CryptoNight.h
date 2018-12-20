@@ -33,6 +33,8 @@
 #include "xmrig.h"
 #include "interfaces/interface.h"
 
+#include "Options.h"
+
 #define AEON_MEMORY   1048576
 #define AEON_MASK     0xFFFF0
 #define AEON_ITER     0x40000
@@ -58,8 +60,9 @@ class CryptoNight
 {
 public:
 	static bool hash(const Job & job, JobResult & result, cryptonight_ctx* ctx);
-	static bool init(const xmrig::Algo algo, const int variant);
-	static void hash(const uint8_t* input, size_t size, uint8_t* output, cryptonight_ctx* ctx, int variant);
+	static bool init(const xmrig::Algo algo, const Options::AlgoVia via);
+	static void hash(const uint8_t* input, size_t size, uint8_t* output, cryptonight_ctx* ctx,
+	                 const xmrig::Variant variant);
 
 private:
 	static bool selfTest(xmrig::Algo algo, const xmrig::Variant variant);

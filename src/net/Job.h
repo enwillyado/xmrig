@@ -40,7 +40,7 @@ class Job
 {
 public:
 	Job();
-	Job(int poolId, bool nicehash, int algo, int variant);
+	Job(int poolId, bool nicehash, const xmrig::Algo algo, const xmrig::Variant variant);
 	~Job();
 
 	const std::string & getBlobStr() const
@@ -56,7 +56,7 @@ public:
 	bool setBlob(const char* blob);
 	bool setTarget(const char* target);
 	void setCoin(const std::string & coin);
-	void setVariant(int variant);
+	void setVariant(const xmrig::Variant variant);
 
 	inline bool isNicehash() const
 	{
@@ -102,7 +102,7 @@ public:
 	{
 		return m_threadId;
 	}
-	inline int variant() const
+	inline xmrig::Variant variant() const
 	{
 		return (m_variant == xmrig::VARIANT_AUTO ? (m_blob[0] >= 8) ? xmrig::VARIANT_V2 :
 		        (m_blob[0] > 6 ? xmrig::VARIANT_V1 : xmrig::VARIANT_NONE) : m_variant);
@@ -162,10 +162,10 @@ private:
 	std::string m_coin;
 	std::string m_blob_str;
 	std::string m_target_str;
-	int m_algo;
+	xmrig::Algo m_algo;
 	int m_poolId;
 	int m_threadId;
-	int m_variant;
+	xmrig::Variant m_variant;
 	size_t m_size;
 	uint64_t m_diff;
 	uint64_t m_target;

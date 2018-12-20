@@ -333,7 +333,7 @@ bool Client::parseJob(const rapidjson::Value & params, int* code)
 
 	if(params.HasMember("variant"))
 	{
-		job.setVariant(params["variant"].GetInt());
+		job.setVariant((xmrig::Variant)params["variant"].GetInt());
 	}
 
 	if(params.HasMember("instance"))

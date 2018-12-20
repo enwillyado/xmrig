@@ -76,7 +76,7 @@ static char const usage[] = "Usage: \" APP_ID [OPTIONS]\"" "\n"
                             "-u, --user=USERNAME      username for mining server" "\n"
                             "-p, --pass=PASSWORD      password for mining server" "\n"
                             "-t, --threads=N          number of miner threads" "\n"
-                            "-v, --av=N               algorithm variation, 0 auto select" "\n"
+                            "-v, --av=N               algorithm via, 0 auto select" "\n"
                             "-k, --keepalive          send keepalived for prevent timeout (need pool support)" "\n"
                             "-r, --retries=N          number of times to retry before switch to backup server (default: 5)" "\n"
                             "-R, --retry-pause=N      time to pause between retries (default: 5)" "\n"
@@ -314,7 +314,7 @@ Options::Options(int argc, char** argv) :
 	m_logFile(""),
 	m_userAgent(""),
 	m_algo(xmrig::ALGO_CRYPTONIGHT),
-	m_algoVariant(0),
+	m_algoVia(Options::AV0_AUTO),
 	m_apiPort(0),
 	m_maxCpuUsage(100),
 	m_printTime(60),
@@ -376,8 +376,8 @@ Options::Options(int argc, char** argv) :
 		return;
 	}
 
-	m_algoVariant = getAlgoVariant();
-	if(m_algoVariant == AV2_AESNI_DOUBLE || m_algoVariant == AV4_SOFT_AES_DOUBLE)
+	m_algoVia = getAlgoVia();
+	if(m_algoVia == AV2_AESNI_DOUBLE || m_algoVia == AV4_SOFT_AES_DOUBLE)
 	{
 		m_doubleHash = true;
 	}
@@ -395,10 +395,19 @@ Options::Options(int argc, char** argv) :
 		}
 	}
 
-	if(m_doubleHash && m_algoVariant != AV2_AESNI_DOUBLE && m_algoVariant != AV4_SOFT_AES_DOUBLE)
+	if(m_doubleHash && m_algoVia != AV2_AESNI_DOUBLE && m_algoVia != AV4_SOFT_AES_DOUBLE)
 	{
 		fprintf(stdout, "Double!\n");
-		m_algoVariant += 1;
+
+		if(m_algoVia == AV1_AESNI)
+		{
+			m_algoVia = AV2_AESNI_DOUBLE;
+		}
+
+		if(m_algoVia == AV3_SOFT_AES)
+		{
+			m_algoVia = AV4_SOFT_AES_DOUBLE;
+		}
 	}
 
 	adjust();
@@ -686,7 +695,7 @@ bool Options::parseArg(int key, uint64_t arg)
 			return false;
 		}
 
-		m_algoVariant = (int) arg;
+		m_algoVia = (Options::AlgoVia) arg;
 		break;
 
 #ifndef XMRIG_NO_DONATE
@@ -748,7 +757,7 @@ bool Options::parseArg(int key, uint64_t arg)
 		break;
 
 	case 1010: /* --variant */
-		m_pools.back().setVariant((int) arg);
+		m_pools.back().setVariant((xmrig::Variant) arg);
 		break;
 
 	case 1020: /* --cpu-affinity */
@@ -1076,42 +1085,42 @@ bool Options::setAlgo(const std::string & algo)
 }
 
 
-int Options::getAlgoVariant() const
+Options::AlgoVia Options::getAlgoVia() const
 {
 #   ifndef XMRIG_NO_AEON
 	if(m_algo == xmrig::ALGO_CRYPTONIGHT_LITE)
 	{
-		return getAlgoVariantLite();
+		return getAlgoViaLite();
 	}
 #   endif
 
-	if(m_algoVariant <= AV0_AUTO || m_algoVariant >= AV_MAX)
+	if(m_algoVia <= AV0_AUTO || m_algoVia >= AV_MAX)
 	{
 		return Cpu::hasAES() ? AV1_AESNI : AV3_SOFT_AES;
 	}
 
-	if(m_safe && !Cpu::hasAES() && m_algoVariant <= AV2_AESNI_DOUBLE)
+	if(m_safe && !Cpu::hasAES() && m_algoVia <= AV2_AESNI_DOUBLE)
 	{
-		return m_algoVariant + 2;
+		return m_algoVia == AV1_AESNI ? AV3_SOFT_AES : AV4_SOFT_AES_DOUBLE;
 	}
 
-	return m_algoVariant;
+	return m_algoVia;
 }
 
 
 #ifndef XMRIG_NO_AEON
-int Options::getAlgoVariantLite() const
+int Options::getAlgoViaLite() const
 {
-	if(m_algoVariant <= AV0_AUTO || m_algoVariant >= AV_MAX)
+	if(m_algoVia <= AV0_AUTO || m_algoVia >= AV_MAX)
 	{
 		return Cpu::hasAES() ? AV2_AESNI_DOUBLE : AV4_SOFT_AES_DOUBLE;
 	}
 
-	if(m_safe && !Cpu::hasAES() && m_algoVariant <= AV2_AESNI_DOUBLE)
+	if(m_safe && !Cpu::hasAES() && m_algoVia <= AV2_AESNI_DOUBLE)
 	{
-		return m_algoVariant + 2;
+		return m_algoVia + 2;
 	}
 
-	return m_algoVariant;
+	return m_algoVia;
 }
 #endif
