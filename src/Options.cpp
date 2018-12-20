@@ -313,7 +313,7 @@ Options::Options(int argc, char** argv) :
 	m_apiWorkerId(""),
 	m_logFile(""),
 	m_userAgent(""),
-	m_algo(0),
+	m_algo(xmrig::ALGO_CRYPTONIGHT),
 	m_algoVariant(0),
 	m_apiPort(0),
 	m_maxCpuUsage(100),
@@ -1053,7 +1053,7 @@ bool Options::setAlgo(const std::string & algo)
 	{
 		if(algo_names[i] && algo == algo_names[i])
 		{
-			m_algo = (int) i;
+			m_algo = (xmrig::Algo) i;
 			break;
 		}
 

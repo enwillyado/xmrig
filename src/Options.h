@@ -29,6 +29,7 @@
 #include <vector>
 #include <string>
 
+#include "xmrig.h"
 #include "rapidjson/fwd.h"
 
 
@@ -125,7 +126,7 @@ public:
 	{
 		return m_pools;
 	}
-	inline int algo() const
+	inline xmrig::Algo algo() const
 	{
 		return m_algo;
 	}
@@ -241,7 +242,7 @@ private:
 	std::string m_apiWorkerId;
 	std::string m_logFile;
 	std::string m_userAgent;
-	int m_algo;
+	xmrig::Algo m_algo;
 	int m_algoVariant;
 	int m_apiPort;
 	int m_maxCpuUsage;

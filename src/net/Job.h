@@ -104,7 +104,8 @@ public:
 	}
 	inline int variant() const
 	{
-		return (m_variant == xmrig::VARIANT_AUTO ? (m_blob[0] > 6 ? 1 : 0) : m_variant);
+		return (m_variant == xmrig::VARIANT_AUTO ? (m_blob[0] >= 8) ? xmrig::VARIANT_V2 :
+		        (m_blob[0] > 6 ? xmrig::VARIANT_V1 : xmrig::VARIANT_NONE) : m_variant);
 	}
 	inline size_t size() const
 	{

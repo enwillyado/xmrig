@@ -30,6 +30,7 @@
 #include <stdint.h>
 
 #include "align.h"
+#include "xmrig.h"
 #include "interfaces/interface.h"
 
 #define AEON_MEMORY   1048576
@@ -57,11 +58,11 @@ class CryptoNight
 {
 public:
 	static bool hash(const Job & job, JobResult & result, cryptonight_ctx* ctx);
-	static bool init(int algo, int variant);
+	static bool init(const xmrig::Algo algo, const int variant);
 	static void hash(const uint8_t* input, size_t size, uint8_t* output, cryptonight_ctx* ctx, int variant);
 
 private:
-	static bool selfTest(int algo);
+	static bool selfTest(xmrig::Algo algo, const xmrig::Variant variant);
 };
 
 #endif /* __CRYPTONIGHT_H__ */

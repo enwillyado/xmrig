@@ -28,7 +28,7 @@ namespace xmrig
 {
 	enum Algo
 	{
-		ALGO_CRYPTONIGHT,      /* CryptoNight (Monero) */
+		ALGO_CRYPTONIGHT = 0,      /* CryptoNight (Monero) */
 #ifndef XMRIG_NO_AEON
 		ALGO_CRYPTONIGHT_LITE, /* CryptoNight-Lite (AEON) */
 #endif
@@ -38,7 +38,8 @@ namespace xmrig
 	{
 		VARIANT_AUTO = -1,
 		VARIANT_NONE = 0,
-		VARIANT_V1   = 1
+		VARIANT_V1   = 1,
+		VARIANT_V2   = 2
 	};
 
 } /* xmrig */
