@@ -28,7 +28,8 @@
 class Summary
 {
 public:
-	static void print();
+	static void printInit();
+	static void printStart();
 };
 
 

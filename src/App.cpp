@@ -127,14 +127,23 @@ int App::exec()
 
 	background();
 
+	Summary::printInit();
+
+	PRINT_MSG("");
+	PRINT_MSG("   [Initializing  \"" << m_options->algoName() << "\" algorithm ] ...");
 	if(!CryptoNight::init(m_options->algo(), m_options->algoVia()))
 	{
-		LOG_ERR("\"" << m_options->algoName() << "\" hash self-test failed.");
+		LOG_ERR("\"" << m_options->algoName() << "\" hash self-test failed. Abort!");
 		return 1;
+	}
+	else
+	{
+		PRINT_MSG("   [All \"" << m_options->algoName() << "\" self-test passed.]");
+		PRINT_MSG("");
 	}
 
 	Mem::allocate(m_options->algo(), m_options->threads(), m_options->doubleHash(), m_options->hugePages());
-	Summary::print();
+	Summary::printStart();
 
 	if(m_options->dryRun())
 	{

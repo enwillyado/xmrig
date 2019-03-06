@@ -204,18 +204,21 @@ static void print_commands()
 }
 
 
-void Summary::print()
+void Summary::printInit()
 {
 	print_versions();
 	print_memory();
 	print_cpu();
 	print_threads();
+}
+
+void Summary::printStart()
+{
 	print_pools();
 
 #   ifndef XMRIG_NO_API
 	print_api();
 #   endif
-
 	print_commands();
 }
 
