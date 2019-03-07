@@ -834,10 +834,6 @@ bool Options::parseBoolean(int key, bool enable)
 			fprintf(stderr, "SSL is not supported.\n");
 			return false;
 		}
-		else
-		{
-			m_pools.back().setSslFalse();
-		}
 #else
 		m_pools.back().setSsl(enable);
 #endif

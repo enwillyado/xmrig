@@ -161,11 +161,6 @@ public:
 	{
 		m_ssl = ssl;
 	}
-#else
-	inline void setSslFalse()
-	{
-		m_ssl = false;
-	}
 #endif
 
 #ifndef XMRIG_NO_UDP
