@@ -834,8 +834,13 @@ bool Options::parseBoolean(int key, bool enable)
 			fprintf(stderr, "SSL is not supported.\n");
 			return false;
 		}
-#endif
+		else
+		{
+			m_pools.back().setSsl<false>();
+		}
+#else
 		m_pools.back().setSsl(enable);
+#endif
 		break;
 
 #ifndef XMRIG_NO_UDP

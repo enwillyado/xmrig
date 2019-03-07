@@ -161,6 +161,15 @@ public:
 	{
 		m_ssl = ssl;
 	}
+#else
+	template<bool B>
+	inline void setSsl();
+
+	template<>
+	inline void setSsl<false>()
+	{
+		m_ssl = false;
+	}
 #endif
 
 #ifndef XMRIG_NO_UDP
