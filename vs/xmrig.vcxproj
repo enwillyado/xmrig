@@ -187,6 +187,7 @@
     <ClInclude Include="..\src\crypto\skein_port.h" />
     <ClInclude Include="..\src\crypto\soft_aes.h" />
     <ClInclude Include="..\src\crypto\SSE2NEON.h" />
+    <ClInclude Include="..\src\crypto\variant4_random_math.h" />
     <ClInclude Include="..\src\donate.h" />
     <ClInclude Include="..\src\interfaces\IClientListener.h" />
     <ClInclude Include="..\src\interfaces\IConsoleListener.h" />

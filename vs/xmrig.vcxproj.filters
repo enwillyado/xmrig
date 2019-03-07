@@ -600,6 +600,9 @@
     <ClInclude Include="..\src\net\UdpClient.h">
       <Filter>Archivos de encabezado\net</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\crypto\variant4_random_math.h">
+      <Filter>Archivos de encabezado\crypto</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="..\src\3rdparty\libcpuid\masm-x64.asm">

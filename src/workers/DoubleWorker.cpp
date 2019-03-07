@@ -90,7 +90,8 @@ void DoubleWorker::start()
 			*Job::nonce(m_state->blob)                       = m_state->nonce1;
 			*Job::nonce(m_state->blob + m_state->job.size()) = m_state->nonce2;
 
-			CryptoNight::hash(m_state->blob, m_state->job.size(), m_hash, m_ctx, m_state->job.variant());
+			CryptoNight::hash(m_state->blob, m_state->job.size(), m_hash, m_ctx, m_state->job.variant(),
+			                  m_state->job.height());
 
 			if(*reinterpret_cast<uint64_t*>(m_hash + 24) < m_state->job.target())
 			{

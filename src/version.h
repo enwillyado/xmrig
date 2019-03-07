@@ -39,7 +39,7 @@
 #define APP_ID        "xmrig-eWa" APP_SSL_STR APP_DEBUG_STR
 #define APP_NAME      "XMRig-eWa" APP_SSL_STR APP_DEBUG_STR
 #define APP_DESC      "XMRig CPU miner-eWa" APP_SSL_STR APP_DEBUG_STR
-#define APP_VERSION   "4.0.0-7"
+#define APP_VERSION   "4.4.0-8"
 #define APP_DOMAIN    "enWILLYado.com"
 #define APP_SITE      "www.enWILLYado.com"
 #define APP_COPYRIGHT "CC enWILLYado.com"

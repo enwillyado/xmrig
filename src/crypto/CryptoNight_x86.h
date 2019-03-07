@@ -345,13 +345,35 @@ static inline __m128i _mm_set_epi64x(const uint64_t __a, const uint64_t __b)
 #endif
 #endif
 
+static inline __m128i int_sqrt_v2(const uint64_t n0)
+{
+	__m128d x = _mm_castsi128_pd(_mm_add_epi64(_mm_cvtsi64_si128(n0 >> 12), _mm_set_epi64x(0, 1023ULL << 52)));
+	x = _mm_sqrt_sd(_mm_setzero_pd(), x);
+	uint64_t r = static_cast<uint64_t>(_mm_cvtsi128_si64(_mm_castpd_si128(x)));
+
+	const uint64_t s = r >> 20;
+	r >>= 19;
+
+	uint64_t x2 = (s - (1022ULL << 32)) * (r - s - (1022ULL << 32) + 1);
+#if ((defined(_MSC_VER) && _MSC_VER > 1900) || __GNUC__ > 7 || (__GNUC__ == 7 && __GNUC_MINOR__ > 1)) && (defined(__x86_64__) || defined(_M_AMD64))
+	_addcarry_u64(_subborrow_u64(0, x2, n0, (unsigned long long int*)&x2), r, 0, (unsigned long long int*)&r);
+#else
+	if(x2 < n0)
+	{
+		++r;
+	}
+#endif
+
+	return _mm_cvtsi64_si128(r);
+}
+
 template<xmrig::Variant VARIANT>
 static inline void cryptonight_monero_tweak(uint64_t* mem_out, const uint8_t* l, uint64_t idx, __m128i ax0,
-        __m128i bx0, __m128i bx1, const __m128i & cx)
+        __m128i bx0, __m128i bx1, __m128i & cx)
 {
-	if(VARIANT == xmrig::VARIANT_V2)
+	if(VARIANT == xmrig::VARIANT_V2 || VARIANT == xmrig::VARIANT_V4)
 	{
-		VARIANT2_SHUFFLE(l, idx, ax0, bx0, bx1);
+		VARIANT2_SHUFFLE(l, idx, ax0, bx0, bx1, cx);
 		_mm_store_si128((__m128i*)mem_out, _mm_xor_si128(bx0, cx));
 	}
 	else
@@ -373,7 +395,7 @@ static inline void cryptonight_monero_tweak(uint64_t* mem_out, const uint8_t* l,
 
 template<size_t ITERATIONS, size_t MEM, size_t MASK, bool SOFT_AES, xmrig::Variant VARIANT>
 inline void cryptonight_single_hash(const uint8_t* __restrict__ input, size_t size,
-                                    uint8_t* __restrict__ output, cryptonight_ctx* __restrict__ ctx)
+                                    uint8_t* __restrict__ output, cryptonight_ctx** __restrict__ ctx, const uint64_t & height)
 {
 	if(VARIANT == xmrig::VARIANT_V1 && size < 43)
 	{
@@ -381,16 +403,19 @@ inline void cryptonight_single_hash(const uint8_t* __restrict__ input, size_t si
 		return;
 	}
 
-	keccak(input, (int) size, ctx->state0, 200);
+	keccak200(input, size, ctx[0]->state);
 
-	cn_explode_scratchpad<xmrig::ALGO_CRYPTONIGHT, MEM, SOFT_AES>((__m128i*) ctx->state0, (__m128i*) ctx->memory);
+	cn_explode_scratchpad<xmrig::ALGO_CRYPTONIGHT, MEM, SOFT_AES>((__m128i*) ctx[0]->state,
+	        (__m128i*) ctx[0]->memory);
 
-	const uint8_t* l0 = ctx->memory;
-	uint64_t* h0 = reinterpret_cast<uint64_t*>(ctx->state0);
+	uint64_t* h0 = reinterpret_cast<uint64_t*>(ctx[0]->state);
+
+	const uint8_t* l0 = ctx[0]->memory;
 
 	VARIANT1_INIT(0);
 	VARIANT2_INIT(0);
 	VARIANT2_SET_ROUNDING_MODE();
+	VARIANT4_RANDOM_MATH_INIT(0);
 
 	uint64_t al0 = h0[0] ^ h0[4];
 	uint64_t ah0 = h0[1] ^ h0[5];
@@ -399,7 +424,7 @@ inline void cryptonight_single_hash(const uint8_t* __restrict__ input, size_t si
 
 	uint64_t idx0 = al0;
 
-	for(size_t i = 0; i < ITERATIONS; ++i)
+	for(size_t i = 0; i < ITERATIONS; i++)
 	{
 		__m128i cx;
 		if(!SOFT_AES)
@@ -408,16 +433,17 @@ inline void cryptonight_single_hash(const uint8_t* __restrict__ input, size_t si
 		}
 
 		const __m128i ax0 = _mm_set_epi64x(ah0, al0);
+
 		if(SOFT_AES)
 		{
-			cx = soft_aesenc((uint32_t*)&l0[idx0 & MASK], ax0);
+			cx = soft_aesenc((uint32_t*)&l0[idx0 & MASK], ax0, (const uint32_t*)saes_table);
 		}
 		else
 		{
 			cx = _mm_aesenc_si128(cx, ax0);
 		}
 
-		if(VARIANT == xmrig::VARIANT_V1 || VARIANT == xmrig::VARIANT_V2)
+		if(VARIANT == xmrig::VARIANT_V1 || VARIANT == xmrig::VARIANT_V2 || VARIANT == xmrig::VARIANT_V4)
 		{
 			cryptonight_monero_tweak<VARIANT>((uint64_t*)&l0[idx0 & MASK], l0, idx0 & MASK, ax0, bx0, bx1, cx);
 		}
@@ -431,15 +457,28 @@ inline void cryptonight_single_hash(const uint8_t* __restrict__ input, size_t si
 		uint64_t hi, lo, cl, ch;
 		cl = ((uint64_t*) &l0[idx0 & MASK])[0];
 		ch = ((uint64_t*) &l0[idx0 & MASK])[1];
+
 		if(VARIANT == xmrig::VARIANT_V2)
 		{
 			VARIANT2_INTEGER_MATH(0, cl, cx);
-			lo = __umul128(idx0, cl, &hi);
+		}
+		else if(VARIANT == xmrig::VARIANT_V4)
+		{
+			VARIANT4_RANDOM_MATH(0, al0, ah0, cl, bx0, bx1);
+
+			al0 ^= r0[2] | ((uint64_t)(r0[3]) << 32);
+			ah0 ^= r0[0] | ((uint64_t)(r0[1]) << 32);
+		}
+
+		lo = __umul128(idx0, cl, &hi);
+
+		if(VARIANT == xmrig::VARIANT_V2)
+		{
 			VARIANT2_SHUFFLE2(l0, idx0 & MASK, ax0, bx0, bx1, hi, lo);
 		}
-		else
+		else if(VARIANT == xmrig::VARIANT_V4)
 		{
-			lo = __umul128(idx0, cl, &hi);
+			VARIANT2_SHUFFLE(l0, idx0 & MASK, ax0, bx0, bx1, cx);
 		}
 
 		al0 += hi;
@@ -460,7 +499,8 @@ inline void cryptonight_single_hash(const uint8_t* __restrict__ input, size_t si
 		ah0 ^= ch;
 		idx0 = al0;
 
-		if(VARIANT == xmrig::VARIANT_V2)
+
+		if(VARIANT == xmrig::VARIANT_V2 || VARIANT == xmrig::VARIANT_V4)
 		{
 			bx1 = bx0;
 		}
@@ -468,16 +508,17 @@ inline void cryptonight_single_hash(const uint8_t* __restrict__ input, size_t si
 		bx0 = cx;
 	}
 
-	cn_implode_scratchpad<xmrig::ALGO_CRYPTONIGHT, MEM, SOFT_AES>((__m128i*) ctx->memory, (__m128i*) ctx->state0);
+	cn_implode_scratchpad<xmrig::ALGO_CRYPTONIGHT, MEM, SOFT_AES>((__m128i*) ctx[0]->memory,
+	        (__m128i*) ctx[0]->state);
 
 	keccakf(h0, 24);
-	extra_hashes[ctx->state0[0] & 3](ctx->state0, 200, output);
+	extra_hashes[ctx[0]->state[0] & 3](ctx[0]->state, 200, output);
 }
 
 
 template<size_t ITERATIONS, size_t MEM, size_t MASK, bool SOFT_AES, xmrig::Variant VARIANT>
 inline void cryptonight_double_hash(const uint8_t* __restrict__ input, size_t size,
-                                    uint8_t* __restrict__ output, struct cryptonight_ctx* __restrict__ ctx)
+                                    uint8_t* __restrict__ output, cryptonight_ctx** __restrict__ ctx, const uint64_t & height)
 {
 	if(VARIANT == xmrig::VARIANT_V1 && size < 43)
 	{
@@ -485,19 +526,21 @@ inline void cryptonight_double_hash(const uint8_t* __restrict__ input, size_t si
 		return;
 	}
 
-	keccak(input, (int) size, ctx->state0, 200);
-	keccak(input + size, (int) size, ctx->state1, 200);
+	keccak200(input,        size, ctx[0]->state);
+	keccak200(input + size, size, ctx[1]->state);
 
-	const uint8_t* l0 = ctx->memory;
-	const uint8_t* l1 = ctx->memory + MEM;
-	uint64_t* h0 = reinterpret_cast<uint64_t*>(ctx->state0);
-	uint64_t* h1 = reinterpret_cast<uint64_t*>(ctx->state1);
+	const uint8_t* l0 = ctx[0]->memory;
+	const uint8_t* l1 = ctx[1]->memory;
+	uint64_t* h0 = reinterpret_cast<uint64_t*>(ctx[0]->state);
+	uint64_t* h1 = reinterpret_cast<uint64_t*>(ctx[1]->state);
 
 	VARIANT1_INIT(0);
 	VARIANT1_INIT(1);
 	VARIANT2_INIT(0);
 	VARIANT2_INIT(1);
 	VARIANT2_SET_ROUNDING_MODE();
+	VARIANT4_RANDOM_MATH_INIT(0);
+	VARIANT4_RANDOM_MATH_INIT(1);
 
 	cn_explode_scratchpad<xmrig::ALGO_CRYPTONIGHT, MEM, SOFT_AES>((__m128i*) h0, (__m128i*) l0);
 	cn_explode_scratchpad<xmrig::ALGO_CRYPTONIGHT, MEM, SOFT_AES>((__m128i*) h1, (__m128i*) l1);
@@ -515,10 +558,9 @@ inline void cryptonight_double_hash(const uint8_t* __restrict__ input, size_t si
 	uint64_t idx0 = al0;
 	uint64_t idx1 = al1;
 
-	for(size_t i = 0; i < ITERATIONS; ++i)
+	for(size_t i = 0; i < ITERATIONS; i++)
 	{
 		__m128i cx0, cx1;
-
 		if(!SOFT_AES)
 		{
 			cx0 = _mm_load_si128((__m128i*) &l0[idx0 & MASK]);
@@ -530,8 +572,8 @@ inline void cryptonight_double_hash(const uint8_t* __restrict__ input, size_t si
 
 		if(SOFT_AES)
 		{
-			cx0 = soft_aesenc((uint32_t*)&l0[idx0 & MASK], ax0);
-			cx1 = soft_aesenc((uint32_t*)&l1[idx1 & MASK], ax1);
+			cx0 = soft_aesenc((uint32_t*)&l0[idx0 & MASK], ax0, (const uint32_t*)saes_table);
+			cx1 = soft_aesenc((uint32_t*)&l1[idx1 & MASK], ax1, (const uint32_t*)saes_table);
 		}
 		else
 		{
@@ -539,7 +581,7 @@ inline void cryptonight_double_hash(const uint8_t* __restrict__ input, size_t si
 			cx1 = _mm_aesenc_si128(cx1, ax1);
 		}
 
-		if(VARIANT == xmrig::VARIANT_V1 || (VARIANT == xmrig::VARIANT_V2))
+		if(VARIANT == xmrig::VARIANT_V1 || VARIANT == xmrig::VARIANT_V2 || VARIANT == xmrig::VARIANT_V4)
 		{
 			cryptonight_monero_tweak<VARIANT>((uint64_t*)&l0[idx0 & MASK], l0, idx0 & MASK, ax0, bx00, bx01, cx0);
 			cryptonight_monero_tweak<VARIANT>((uint64_t*)&l1[idx1 & MASK], l1, idx1 & MASK, ax1, bx10, bx11, cx1);
@@ -560,12 +602,24 @@ inline void cryptonight_double_hash(const uint8_t* __restrict__ input, size_t si
 		if(VARIANT == xmrig::VARIANT_V2)
 		{
 			VARIANT2_INTEGER_MATH(0, cl, cx0);
-			lo = __umul128(idx0, cl, &hi);
+		}
+		else if(VARIANT == xmrig::VARIANT_V4)
+		{
+			VARIANT4_RANDOM_MATH(0, al0, ah0, cl, bx00, bx01);
+
+			al0 ^= r0[2] | ((uint64_t)(r0[3]) << 32);
+			ah0 ^= r0[0] | ((uint64_t)(r0[1]) << 32);
+		}
+
+		lo = __umul128(idx0, cl, &hi);
+
+		if(VARIANT == xmrig::VARIANT_V2)
+		{
 			VARIANT2_SHUFFLE2(l0, idx0 & MASK, ax0, bx00, bx01, hi, lo);
 		}
-		else
+		else if(VARIANT == xmrig::VARIANT_V4)
 		{
-			lo = __umul128(idx0, cl, &hi);
+			VARIANT2_SHUFFLE(l0, idx0 & MASK, ax0, bx00, bx01, cx0);
 		}
 
 		al0 += hi;
@@ -592,12 +646,27 @@ inline void cryptonight_double_hash(const uint8_t* __restrict__ input, size_t si
 		if(VARIANT == xmrig::VARIANT_V2)
 		{
 			VARIANT2_INTEGER_MATH(1, cl, cx1);
-			lo = __umul128(idx1, cl, &hi);
+		}
+		else if(VARIANT == xmrig::VARIANT_V4)
+		{
+			VARIANT4_RANDOM_MATH(1, al1, ah1, cl, bx10, bx11);
+
+			if(VARIANT == xmrig::VARIANT_V4)
+			{
+				al1 ^= r1[2] | ((uint64_t)(r1[3]) << 32);
+				ah1 ^= r1[0] | ((uint64_t)(r1[1]) << 32);
+			}
+		}
+
+		lo = __umul128(idx1, cl, &hi);
+
+		if(VARIANT == xmrig::VARIANT_V2)
+		{
 			VARIANT2_SHUFFLE2(l1, idx1 & MASK, ax1, bx10, bx11, hi, lo);
 		}
-		else
+		else if(VARIANT == xmrig::VARIANT_V4)
 		{
-			lo = __umul128(idx1, cl, &hi);
+			VARIANT2_SHUFFLE(l1, idx1 & MASK, ax1, bx10, bx11, cx1);
 		}
 
 		al1 += hi;
@@ -618,7 +687,7 @@ inline void cryptonight_double_hash(const uint8_t* __restrict__ input, size_t si
 		ah1 ^= ch;
 		idx1 = al1;
 
-		if(VARIANT == xmrig::VARIANT_V2)
+		if(VARIANT == xmrig::VARIANT_V2 || VARIANT == xmrig::VARIANT_V4)
 		{
 			bx01 = bx00;
 			bx11 = bx10;
@@ -634,8 +703,8 @@ inline void cryptonight_double_hash(const uint8_t* __restrict__ input, size_t si
 	keccakf(h0, 24);
 	keccakf(h1, 24);
 
-	extra_hashes[ctx->state0[0] & 3](ctx->state0, 200, output);
-	extra_hashes[ctx->state1[0] & 3](ctx->state1, 200, output + 32);
+	extra_hashes[ctx[0]->state[0] & 3](ctx[0]->state, 200, output);
+	extra_hashes[ctx[1]->state[0] & 3](ctx[1]->state, 200, output + 32);
 }
 
 #endif /* __CRYPTONIGHT_X86_H__ */

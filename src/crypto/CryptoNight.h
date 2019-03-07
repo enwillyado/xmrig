@@ -43,12 +43,39 @@
 #define MONERO_MASK   0x1FFFF0
 #define MONERO_ITER   0x80000
 
+#if defined _MSC_VER || defined XMRIG_ARM
+#define ABI_ATTRIBUTE
+#else
+#define ABI_ATTRIBUTE __attribute__((ms_abi))
+#endif
+
+struct cryptonight_ctx;
+typedef void(*cn_mainloop_fun_ms_abi)(cryptonight_ctx*) ABI_ATTRIBUTE;
+typedef void(*cn_mainloop_double_fun_ms_abi)(cryptonight_ctx*, cryptonight_ctx*) ABI_ATTRIBUTE;
+
+struct cryptonight_r_data
+{
+	int variant;
+	uint64_t height;
+
+	bool match(const int v, const uint64_t h) const
+	{
+		return (v == variant) && (h == height);
+	}
+};
 
 struct cryptonight_ctx
 {
-	VAR_ALIGN(16, uint8_t state0[200]);
-	VAR_ALIGN(16, uint8_t state1[200]);
+	VAR_ALIGN(16, uint8_t state[224]);
 	VAR_ALIGN(16, uint8_t* memory);
+
+	uint8_t unused[40];
+	const uint32_t* saes_table;
+
+	cn_mainloop_fun_ms_abi generated_code;
+	cn_mainloop_double_fun_ms_abi generated_code_double;
+	cryptonight_r_data generated_code_data;
+	cryptonight_r_data generated_code_double_data;
 };
 
 
@@ -59,13 +86,14 @@ class JobResult;
 class CryptoNight
 {
 public:
-	static bool hash(const Job & job, JobResult & result, cryptonight_ctx* ctx);
 	static bool init(const xmrig::Algo algo, const Options::AlgoVia via);
-	static void hash(const uint8_t* input, size_t size, uint8_t* output, cryptonight_ctx* ctx,
-	                 const xmrig::Variant variant);
+	static bool hash(const Job & job, JobResult & result, cryptonight_ctx* ctx []);
+	static void hash(const uint8_t* input, size_t size, uint8_t* output, cryptonight_ctx* ctx[],
+	                 const xmrig::Variant variant, const uint64_t & height);
 
 private:
 	static bool selfTest(xmrig::Algo algo, const xmrig::Variant variant);
+	static bool selfTestV4();
 };
 
 #endif /* __CRYPTONIGHT_H__ */

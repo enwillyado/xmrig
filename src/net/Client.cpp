@@ -336,6 +336,16 @@ bool Client::parseJob(const rapidjson::Value & params, int* code)
 		job.setVariant((xmrig::Variant)params["variant"].GetInt());
 	}
 
+	if(params.HasMember("height"))
+	{
+		const rapidjson::Value & height = params["height"];
+
+		if(height.IsUint64())
+		{
+			job.setHeight(height.GetUint64());
+		}
+	}
+
 	if(params.HasMember("instance"))
 	{
 		job.setInstanceId(params["instance"].GetInt());

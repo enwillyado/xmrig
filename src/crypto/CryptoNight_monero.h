@@ -33,22 +33,21 @@
 #ifndef XMRIG_ARM
 #   define VARIANT1_INIT(part) \
 	uint64_t tweak1_2_##part = 0; \
-	if (VARIANT > 0) { \
+	if (VARIANT == xmrig::VARIANT_V1) { \
 		tweak1_2_##part = (*reinterpret_cast<const uint64_t*>(input + 35 + part * size) ^ \
-		                   *(reinterpret_cast<const uint64_t*>(ctx->state##part) + 24)); \
+		                   *(reinterpret_cast<const uint64_t*>(ctx[part]->state) + 24)); \
 	}
 #else
 #   define VARIANT1_INIT(part) \
 	uint64_t tweak1_2_##part = 0; \
-	if (VARIANT > 0) { \
-		volatile const uint64_t a = *reinterpret_cast<const uint64_t*>(input + 35 + part * size); \
-		volatile const uint64_t b = *(reinterpret_cast<const uint64_t*>(ctx->state##part) + 24); \
-		tweak1_2_##part = a ^ b; \
+	if (VARIANT == xmrig::VARIANT_V1) { \
+		memcpy(&tweak1_2_##part, input + 35 + part * size, sizeof tweak1_2_##part); \
+		tweak1_2_##part ^= *(reinterpret_cast<const uint64_t*>(ctx[part]->state) + 24); \
 	}
 #endif
 
 #define VARIANT1_1(p) \
-	if (VARIANT > 0) { \
+	if (VARIANT == xmrig::VARIANT_V1) { \
 		const uint8_t tmp = reinterpret_cast<const uint8_t*>(p)[11]; \
 		static const uint32_t table = 0x75310; \
 		const uint8_t index = (((tmp >> 3) & 6) | (tmp & 1)) << 1; \
@@ -56,79 +55,54 @@
 	}
 
 #define VARIANT1_2(p, part) \
-	if (VARIANT > 0) { \
+	if (VARIANT == xmrig::VARIANT_V1) { \
 		(p) ^= tweak1_2_##part; \
 	}
 
 #ifdef _MSC_VER
-#include <float.h>
-#   define VARIANT2_SET_ROUNDING_MODE() if (VARIANT == xmrig::VARIANT_V2) { _control87(RC_DOWN, MCW_RC); }
+#   define VARIANT2_SET_ROUNDING_MODE() if (VARIANT == xmrig::VARIANT_V2 || VARIANT == xmrig::VARIANT_V4) { _control87(RC_DOWN, MCW_RC); }
 #else
-#   define VARIANT2_SET_ROUNDING_MODE() if (VARIANT == xmrig::VARIANT_V2) { fesetround(FE_DOWNWARD); }
+#   define VARIANT2_SET_ROUNDING_MODE() if (VARIANT == xmrig::VARIANT_V2 || VARIANT == xmrig::VARIANT_V4) { fesetround(FE_DOWNWARD); }
 #endif
 
 #if ! defined _WIN64  && defined _WIN32
 
 /* this one was not implemented yet so here it is */
 #if  defined(_MSC_VER) && _MSC_VER < 1900
-static inline uint64_t _mm_cvtsi128_si64(__m128i a)
+static inline __m128i _mm_cvtsi64_si128(const __int64 & a)
+{
+	__m128i ret;
+	ret.m128i_i64[0] = a;
+	return ret;
+}
+static inline __int64 _mm_cvtsi128_si64(const __m128i & a)
 {
 	return a.m128i_i64[0];
 }
 #else
 #include <math.h>
-static inline uint64_t _mm_cvtsi128_si64(__m128i a)
+static inline __m128i _mm_cvtsi64_si128(const __int64 & a)
+{
+	__m128i ret;
+	unsigned char* retBuffer = (unsigned char*)(&ret);
+	for(size_t i = 0; i < sizeof(__int64); ++i)
+	{
+		retBuffer[i] = ((unsigned char*)&a)[i];
+	}
+	return ret;
+}
+static inline __int64 _mm_cvtsi128_si64(const __m128i & a)
 {
 	return static_cast<uint64_t>(a[0]);
 }
 #endif
 
-#   define VARIANT2_INIT(part) \
-	uint64_t division_result_##part = h##part[12]; \
-	uint64_t sqrt_result_##part = h##part[13];
-
-#   define VARIANT2_INTEGER_MATH(part, cl, cx) \
-	do { \
-		const uint64_t cx_0 = _mm_cvtsi128_si64(cx); \
-		cl ^= division_result_##part ^ (sqrt_result_##part << 32); \
-		const uint32_t d = static_cast<uint32_t>(0xFFFFFFFF & (cx_0 + (sqrt_result_##part << 1))) | 0x80000001UL; \
-		const uint64_t cx_1 = _mm_cvtsi128_si64(_mm_srli_si128(cx, 8)); \
-		division_result_##part = static_cast<uint32_t>(0xFFFFFFFF & (cx_1 / d)) + ((cx_1 % d) << 32); \
-		const uint64_t sqrt_input = cx_0 + division_result_##part; \
-		sqrt_result_##part = sqrt(sqrt_input + 18446744073709551616.0) * 2.0 - 8589934592.0; \
-		const uint64_t s = sqrt_result_##part >> 1; \
-		const uint64_t b = sqrt_result_##part & 1; \
-		const uint64_t r2 = (uint64_t)(s) * (s + b) + (sqrt_result_##part << 32); \
-		sqrt_result_##part += ((r2 + b > sqrt_input) ? -1 : 0) + ((r2 + (1ULL << 32) < sqrt_input - s) ? 1 : 0); \
-	} while (0)
-
-#else
+#endif
 
 #   define VARIANT2_INIT(part) \
 	__m128i division_result_xmm_##part = _mm_cvtsi64_si128(h##part[12]); \
 	__m128i sqrt_result_xmm_##part = _mm_cvtsi64_si128(h##part[13]);
 
-static inline __m128i int_sqrt_v2(const uint64_t n0)
-{
-	__m128d x = _mm_castsi128_pd(_mm_add_epi64(_mm_cvtsi64_si128(n0 >> 12), _mm_set_epi64x(0, 1023ULL << 52)));
-	x = _mm_sqrt_sd(_mm_setzero_pd(), x);
-	uint64_t r = static_cast<uint64_t>(_mm_cvtsi128_si64(_mm_castpd_si128(x)));
-
-	const uint64_t s = r >> 20;
-	r >>= 19;
-
-	uint64_t x2 = (s - (1022ULL << 32)) * (r - s - (1022ULL << 32) + 1);
-#   if (_MSC_VER > 1600 || __GNUC__ > 7 || (__GNUC__ == 7 && __GNUC_MINOR__ > 1)) && (defined(__x86_64__) || defined(_M_AMD64))
-	_addcarry_u64(_subborrow_u64(0, x2, n0, (unsigned long long int*)&x2), r, 0, (unsigned long long int*)&r);
-#   else
-	if(x2 < n0)
-	{
-		++r;
-	}
-#   endif
-
-	return _mm_cvtsi64_si128(r);
-}
 
 #   define VARIANT2_INTEGER_MATH(part, cl, cx) \
 	do { \
@@ -141,9 +115,8 @@ static inline __m128i int_sqrt_v2(const uint64_t n0)
 		division_result_xmm_##part = _mm_cvtsi64_si128(static_cast<int64_t>(division_result)); \
 		sqrt_result_xmm_##part = int_sqrt_v2(cx_0 + division_result); \
 	} while (0)
-#endif
 
-#   define VARIANT2_SHUFFLE(base_ptr, offset, _a, _b, _b1) \
+#   define VARIANT2_SHUFFLE(base_ptr, offset, _a, _b, _b1, _c) \
 	do { \
 		const __m128i chunk1 = _mm_load_si128((__m128i *)((base_ptr) + ((offset) ^ 0x10))); \
 		const __m128i chunk2 = _mm_load_si128((__m128i *)((base_ptr) + ((offset) ^ 0x20))); \
@@ -151,6 +124,9 @@ static inline __m128i int_sqrt_v2(const uint64_t n0)
 		_mm_store_si128((__m128i *)((base_ptr) + ((offset) ^ 0x10)), _mm_add_epi64(chunk3, _b1)); \
 		_mm_store_si128((__m128i *)((base_ptr) + ((offset) ^ 0x20)), _mm_add_epi64(chunk1, _b)); \
 		_mm_store_si128((__m128i *)((base_ptr) + ((offset) ^ 0x30)), _mm_add_epi64(chunk2, _a)); \
+		if (VARIANT == xmrig::VARIANT_V4) { \
+			_c = _mm_xor_si128(_mm_xor_si128(_c, chunk3), _mm_xor_si128(chunk1, chunk2)); \
+		} \
 	} while (0)
 
 #   define VARIANT2_SHUFFLE2(base_ptr, offset, _a, _b, _b1, hi, lo) \
@@ -165,5 +141,43 @@ static inline __m128i int_sqrt_v2(const uint64_t n0)
 		_mm_store_si128((__m128i *)((base_ptr) + ((offset) ^ 0x30)), _mm_add_epi64(chunk2, _a)); \
 	} while (0)
 
+
+#define SWAP32LE(x) x
+#define SWAP64LE(x) x
+#define hash_extra_blake(data, length, hash) blake256_hash((uint8_t*)(hash), (uint8_t*)(data), (length))
+
+#ifndef NOINLINE
+#ifdef __GNUC__
+#define NOINLINE __attribute__ ((noinline))
+#elif _MSC_VER
+#define NOINLINE __declspec(noinline)
+#else
+#define NOINLINE
+#endif
+#endif
+
+#include "variant4_random_math.h"
+
+#define VARIANT4_RANDOM_MATH_INIT(part) \
+	uint32_t r##part[9]; \
+	struct V4_Instruction code##part[256]; \
+	if (VARIANT == xmrig::VARIANT_V4) { \
+		r##part[0] = (uint32_t)(h##part[12] & 0xFFFFFFFF); \
+		r##part[1] = (uint32_t)(h##part[12] >> 32); \
+		r##part[2] = (uint32_t)(h##part[13] & 0xFFFFFFFF); \
+		r##part[3] = (uint32_t)(h##part[13] >> 32); \
+	} \
+	v4_random_math_init<VARIANT>(code##part, height);
+
+#define VARIANT4_RANDOM_MATH(part, al, ah, cl, bx0, bx1) \
+	if (VARIANT == xmrig::VARIANT_V4) { \
+		cl ^= (r##part[0] + r##part[1]) | ((uint64_t)(r##part[2] + r##part[3]) << 32); \
+		r##part[4] = static_cast<uint32_t>(al & 0xFFFFFFFF); \
+		r##part[5] = static_cast<uint32_t>(ah & 0xFFFFFFFF); \
+		r##part[6] = static_cast<uint32_t>(_mm_cvtsi128_si32(bx0)); \
+		r##part[7] = static_cast<uint32_t>(_mm_cvtsi128_si32(bx1)); \
+		r##part[8] = static_cast<uint32_t>(_mm_cvtsi128_si32(_mm_srli_si128(bx1, 8))); \
+		v4_random_math(code##part, r##part); \
+	}
 
 #endif /* __CRYPTONIGHT_MONERO_H__ */

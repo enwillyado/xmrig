@@ -39,7 +39,8 @@ namespace xmrig
 		VARIANT_AUTO = -1,
 		VARIANT_NONE = 0,
 		VARIANT_V1   = 1,
-		VARIANT_V2   = 2
+		VARIANT_V2   = 2,
+		VARIANT_V4   = 4,
 	};
 
 } /* xmrig */

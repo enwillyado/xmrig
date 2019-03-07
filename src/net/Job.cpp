@@ -73,6 +73,7 @@ Job::Job() :
 	m_size(0),
 	m_diff(0),
 	m_target(0),
+	m_height(0),
 	m_id()
 {
 }
@@ -92,6 +93,7 @@ Job::Job(int poolId, bool nicehash, const xmrig::Algo algo, const xmrig::Variant
 	m_size(0),
 	m_diff(0),
 	m_target(0),
+	m_height(0),
 	m_id()
 {
 }
@@ -214,6 +216,10 @@ void Job::setVariant(const xmrig::Variant variant)
 	}
 }
 
+void Job::setHeight(const uint64_t & height)
+{
+	m_height = height;
+}
 
 bool Job::fromHex(const char* in, unsigned int len, unsigned char* out)
 {

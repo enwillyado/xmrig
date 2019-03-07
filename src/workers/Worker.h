@@ -54,7 +54,7 @@ public:
 protected:
 	void storeStats();
 
-	cryptonight_ctx* m_ctx;
+	cryptonight_ctx** m_ctx;
 	int m_id;
 	int m_threads;
 	uint64_t m_hashCount;

@@ -41,7 +41,7 @@ size_t Mem::m_size                    = 0;
 VAR_ALIGN(16, uint8_t* Mem::m_memory) = nullptr;
 
 
-cryptonight_ctx* Mem::create(int threadId)
+cryptonight_ctx** Mem::create(int threadId)
 {
 #   ifndef XMRIG_NO_AEON
 	if(m_algo == xmrig::ALGO_CRYPTONIGHT_LITE)
@@ -50,15 +50,33 @@ cryptonight_ctx* Mem::create(int threadId)
 	}
 #   endif
 
-	cryptonight_ctx* ctx = reinterpret_cast<cryptonight_ctx*>(&m_memory[MONERO_MEMORY - sizeof(cryptonight_ctx) *
-	                                     (threadId + 1)]);
+	cryptonight_ctx** ctx = new cryptonight_ctx*[2];
 
-	const int ratio = m_doubleHash ? 2 : 1;
-	ctx->memory = &m_memory[MONERO_MEMORY * (threadId * ratio + 1)];
+	cryptonight_ctx* ctx0 = reinterpret_cast<cryptonight_ctx*>(&m_memory[MONERO_MEMORY - sizeof(cryptonight_ctx) *
+	                                      (threadId + 1)]);
+	ctx0->memory = &m_memory[MONERO_MEMORY * (threadId * 1 + 1)];
+	ctx[0] = ctx0;
+
+	if(m_doubleHash)
+	{
+		cryptonight_ctx* ctx1 = reinterpret_cast<cryptonight_ctx*>(&m_memory[MONERO_MEMORY - sizeof(cryptonight_ctx) *
+		                                      (threadId + 1)]);
+		ctx1->memory = &m_memory[MONERO_MEMORY * (threadId * 2 + 1)];
+
+		ctx[1] = ctx1;
+	}
+	else
+	{
+		ctx[1] = NULL;
+	}
 
 	return ctx;
 }
 
+void Mem::remove(cryptonight_ctx** ctx)
+{
+	delete [] ctx;
+}
 
 
 void* Mem::calloc(size_t num, size_t size)

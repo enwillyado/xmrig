@@ -91,6 +91,101 @@
 VAR_ALIGN(16, const uint32_t saes_table[4][256]) = { saes_data(saes_u0), saes_data(saes_u1), saes_data(saes_u2), saes_data(saes_u3) };
 VAR_ALIGN(16, const uint8_t  saes_sbox[256]) = saes_data(saes_h0);
 
+
+static FORCEINLINE void soft_aesenc(void* __restrict ptr, const void* __restrict key,
+                                    const uint32_t* __restrict t)
+{
+	uint32_t x0 = ((const uint32_t*)(ptr))[0];
+	uint32_t x1 = ((const uint32_t*)(ptr))[1];
+	uint32_t x2 = ((const uint32_t*)(ptr))[2];
+	uint32_t x3 = ((const uint32_t*)(ptr))[3];
+
+	uint32_t y0 = t[x0 & 0xff];
+	x0 >>= 8;
+	uint32_t y1 = t[x1 & 0xff];
+	x1 >>= 8;
+	uint32_t y2 = t[x2 & 0xff];
+	x2 >>= 8;
+	uint32_t y3 = t[x3 & 0xff];
+	x3 >>= 8;
+	t += 256;
+
+	y0 ^= t[x1 & 0xff];
+	x1 >>= 8;
+	y1 ^= t[x2 & 0xff];
+	x2 >>= 8;
+	y2 ^= t[x3 & 0xff];
+	x3 >>= 8;
+	y3 ^= t[x0 & 0xff];
+	x0 >>= 8;
+	t += 256;
+
+	y0 ^= t[x2 & 0xff];
+	x2 >>= 8;
+	y1 ^= t[x3 & 0xff];
+	x3 >>= 8;
+	y2 ^= t[x0 & 0xff];
+	x0 >>= 8;
+	y3 ^= t[x1 & 0xff];
+	x1 >>= 8;
+	t += 256;
+
+	y0 ^= t[x3];
+	y1 ^= t[x0];
+	y2 ^= t[x1];
+	y3 ^= t[x2];
+
+	((uint32_t*)ptr)[0] = y0 ^ ((uint32_t*)key)[0];
+	((uint32_t*)ptr)[1] = y1 ^ ((uint32_t*)key)[1];
+	((uint32_t*)ptr)[2] = y2 ^ ((uint32_t*)key)[2];
+	((uint32_t*)ptr)[3] = y3 ^ ((uint32_t*)key)[3];
+}
+
+static FORCEINLINE __m128i soft_aesenc(const void* __restrict ptr, const __m128i key,
+                                       const uint32_t* __restrict t)
+{
+	uint32_t x0 = ((const uint32_t*)(ptr))[0];
+	uint32_t x1 = ((const uint32_t*)(ptr))[1];
+	uint32_t x2 = ((const uint32_t*)(ptr))[2];
+	uint32_t x3 = ((const uint32_t*)(ptr))[3];
+
+	uint32_t y0 = t[x0 & 0xff];
+	x0 >>= 8;
+	uint32_t y1 = t[x1 & 0xff];
+	x1 >>= 8;
+	uint32_t y2 = t[x2 & 0xff];
+	x2 >>= 8;
+	uint32_t y3 = t[x3 & 0xff];
+	x3 >>= 8;
+	t += 256;
+
+	y0 ^= t[x1 & 0xff];
+	x1 >>= 8;
+	y1 ^= t[x2 & 0xff];
+	x2 >>= 8;
+	y2 ^= t[x3 & 0xff];
+	x3 >>= 8;
+	y3 ^= t[x0 & 0xff];
+	x0 >>= 8;
+	t += 256;
+
+	y0 ^= t[x2 & 0xff];
+	x2 >>= 8;
+	y1 ^= t[x3 & 0xff];
+	x3 >>= 8;
+	y2 ^= t[x0 & 0xff];
+	x0 >>= 8;
+	y3 ^= t[x1 & 0xff];
+	x1 >>= 8;
+
+	y0 ^= t[x3 + 256];
+	y1 ^= t[x0 + 256];
+	y2 ^= t[x1 + 256];
+	y3 ^= t[x2 + 256];
+
+	return _mm_xor_si128(_mm_set_epi32(y3, y2, y1, y0), key);
+}
+
 static inline __m128i soft_aesenc(const uint32_t* in, __m128i key)
 {
 	const uint32_t x0 = in[0];

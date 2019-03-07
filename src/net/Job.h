@@ -58,6 +58,8 @@ public:
 	void setCoin(const std::string & coin);
 	void setVariant(const xmrig::Variant variant);
 
+	void setHeight(const uint64_t & height);
+
 	inline bool isNicehash() const
 	{
 		return m_nicehash;
@@ -104,8 +106,10 @@ public:
 	}
 	inline xmrig::Variant variant() const
 	{
-		return (m_variant == xmrig::VARIANT_AUTO ? (m_blob[0] >= 8) ? xmrig::VARIANT_V2 :
-		        (m_blob[0] > 6 ? xmrig::VARIANT_V1 : xmrig::VARIANT_NONE) : m_variant);
+		return (m_variant == xmrig::VARIANT_AUTO ?
+		        (m_blob[0] >= 10 ? xmrig::VARIANT_V4 :
+		         (m_blob[0] >= 8 ? xmrig::VARIANT_V2 :
+		          (m_blob[0] > 6 ? xmrig::VARIANT_V1 : xmrig::VARIANT_NONE))) : m_variant);
 	}
 	inline size_t size() const
 	{
@@ -123,6 +127,12 @@ public:
 	{
 		return m_target;
 	}
+
+	inline const uint64_t & height() const
+	{
+		return m_height;
+	}
+
 	inline void setNicehash(bool nicehash)
 	{
 		m_nicehash = nicehash;
@@ -171,6 +181,8 @@ private:
 	uint64_t m_target;
 	VAR_ALIGN(16,
 	          uint8_t m_blob[96]); // Max blob size is 84 (75 fixed + 9 variable), aligned to 96. https://github.com/xmrig/xmrig/issues/1 Thanks fireice-uk.
+
+	uint64_t m_height;
 	xmrig::Id m_id;
 };
 
