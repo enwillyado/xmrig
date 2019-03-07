@@ -37,7 +37,7 @@
 #include <stdlib.h>
 
 #ifndef VERSION
-#define VERSION "7.10"
+#define VERSION "0.4.1"
 #endif
 
 /* Implementation: */
@@ -776,23 +776,23 @@ const char* cpuid_error(void)
 	}
 	matchtable[] =
 	{
-		{ ERR_OK       , "No error"},
-		{ ERR_NO_CPUID , "CPUID instruction is not supported"},
-		{ ERR_NO_RDTSC , "RDTSC instruction is not supported"},
-		{ ERR_NO_MEM   , "Memory allocation failed"},
-		{ ERR_OPEN     , "File open operation failed"},
-		{ ERR_BADFMT   , "Bad file format"},
-		{ ERR_NOT_IMP  , "Not implemented"},
-		{ ERR_CPU_UNKN , "Unsupported processor"},
-		{ ERR_NO_RDMSR , "RDMSR instruction is not supported"},
+		{ ERR_OK, "No error"},
+		{ ERR_NO_CPUID, "CPUID instruction is not supported"},
+		{ ERR_NO_RDTSC, "RDTSC instruction is not supported"},
+		{ ERR_NO_MEM, "Memory allocation failed"},
+		{ ERR_OPEN, "File open operation failed"},
+		{ ERR_BADFMT, "Bad file format"},
+		{ ERR_NOT_IMP, "Not implemented"},
+		{ ERR_CPU_UNKN, "Unsupported processor"},
+		{ ERR_NO_RDMSR, "RDMSR instruction is not supported"},
 		{ ERR_NO_DRIVER, "RDMSR driver error (generic)"},
-		{ ERR_NO_PERMS , "No permissions to install RDMSR driver"},
-		{ ERR_EXTRACT  , "Cannot extract RDMSR driver (read only media?)"},
-		{ ERR_HANDLE   , "Bad handle"},
-		{ ERR_INVMSR   , "Invalid MSR"},
-		{ ERR_INVCNB   , "Invalid core number"},
-		{ ERR_HANDLE_R , "Error on handle read"},
-		{ ERR_INVRANGE , "Invalid given range"},
+		{ ERR_NO_PERMS, "No permissions to install RDMSR driver"},
+		{ ERR_EXTRACT, "Cannot extract RDMSR driver (read only media?)"},
+		{ ERR_HANDLE, "Bad handle"},
+		{ ERR_INVMSR, "Invalid MSR"},
+		{ ERR_INVCNB, "Invalid core number"},
+		{ ERR_HANDLE_R, "Error on handle read"},
+		{ ERR_INVRANGE, "Invalid given range"},
 	};
 	unsigned i;
 	for(i = 0; i < COUNT_OF(matchtable); i++)

@@ -29,7 +29,7 @@
  * \file     libcpuid.h
  * \author   Veselin Georgiev
  * \date     Oct 2008
- * \version  0.4.0
+ * \version  0.4.1
  *
  * Version history:
  *
@@ -57,6 +57,7 @@
  *                       Support for Intel SGX detection
  *                       (a backwards-incompatible change since the sizeof
  *                        cpu_raw_data_t and cpu_id_t is now different).
+ * * 0.4.1 (2019-02-05): A lot of DB updates, and better RDMSR
  */
 
 /** @mainpage A simple libcpuid introduction
@@ -82,14 +83,11 @@
  */
 
 /** @defgroup libcpuid LibCPUID
+ * @brief LibCPUID provides CPU identification
  @{ */
 
 /* Include some integer type specifications: */
-#ifdef _WIN32
 #include "libcpuid_types.h"
-#else
-#  include <stdint.h>
-#endif
 
 /* Some limits and other constants */
 #include "libcpuid_constants.h"
@@ -547,23 +545,23 @@ typedef enum
  */
 typedef enum
 {
-	ERR_OK       =  0,	/*!< "No error" */
-	ERR_NO_CPUID = -1,	/*!< "CPUID instruction is not supported" */
-	ERR_NO_RDTSC = -2,	/*!< "RDTSC instruction is not supported" */
-	ERR_NO_MEM   = -3,	/*!< "Memory allocation failed" */
-	ERR_OPEN     = -4,	/*!< "File open operation failed" */
-	ERR_BADFMT   = -5,	/*!< "Bad file format" */
-	ERR_NOT_IMP  = -6,	/*!< "Not implemented" */
-	ERR_CPU_UNKN = -7,	/*!< "Unsupported processor" */
-	ERR_NO_RDMSR = -8,	/*!< "RDMSR instruction is not supported" */
-	ERR_NO_DRIVER = -9,	/*!< "RDMSR driver error (generic)" */
-	ERR_NO_PERMS = -10,	/*!< "No permissions to install RDMSR driver" */
-	ERR_EXTRACT  = -11,	/*!< "Cannot extract RDMSR driver (read only media?)" */
-	ERR_HANDLE   = -12,	/*!< "Bad handle" */
-	ERR_INVMSR   = -13,	/*!< "Invalid MSR" */
-	ERR_INVCNB   = -14,	/*!< "Invalid core number" */
-	ERR_HANDLE_R = -15,	/*!< "Error on handle read" */
-	ERR_INVRANGE = -16,	/*!< "Invalid given range" */
+	ERR_OK       =  0,	/*!< No error */
+	ERR_NO_CPUID = -1,	/*!< CPUID instruction is not supported */
+	ERR_NO_RDTSC = -2,	/*!< RDTSC instruction is not supported */
+	ERR_NO_MEM   = -3,	/*!< Memory allocation failed */
+	ERR_OPEN     = -4,	/*!< File open operation failed */
+	ERR_BADFMT   = -5,	/*!< Bad file format */
+	ERR_NOT_IMP  = -6,	/*!< Not implemented */
+	ERR_CPU_UNKN = -7,	/*!< Unsupported processor */
+	ERR_NO_RDMSR = -8,	/*!< RDMSR instruction is not supported */
+	ERR_NO_DRIVER = -9,	/*!< RDMSR driver error (generic) */
+	ERR_NO_PERMS = -10,	/*!< No permissions to install RDMSR driver */
+	ERR_EXTRACT  = -11,	/*!< Cannot extract RDMSR driver (read only media?) */
+	ERR_HANDLE   = -12,	/*!< Bad handle */
+	ERR_INVMSR   = -13,	/*!< Invalid MSR */
+	ERR_INVCNB   = -14,	/*!< Invalid core number */
+	ERR_HANDLE_R = -15,	/*!< Error on handle read */
+	ERR_INVRANGE = -16,	/*!< Invalid given range */
 } cpu_error_t;
 
 /**
@@ -1124,7 +1122,7 @@ int cpu_msrinfo(struct msr_driver_t* handle, cpu_msrinfo_request_t which);
 
 /**
  * @brief Writes the raw MSR data to a text file
- * @param data - a pointer to msr_driver_t structure
+ * @param handle -  a handle to the MSR reader driver, as created by cpu_msr_driver_open
  * @param filename - the path of the file, where the serialized data should be
  *                   written. If empty, stdout will be used.
  * @note This is intended primarily for debugging. On some processor, which is
@@ -1147,8 +1145,7 @@ int msr_serialize_raw_data(struct msr_driver_t* handle, const char* filename);
  * This function unloads the MSR driver opened by cpu_msr_driver_open and
  * frees any resources associated with it.
  *
- * @param handle - a handle to the MSR reader driver, as created by
- *                 cpu_msr_driver_open
+ * @param handle - a handle to the MSR reader driver, as created by cpu_msr_driver_open
  *
  * @returns zero if successful, and some negative number on error.
  *          The error message can be obtained by calling \ref cpuid_error.
@@ -1157,7 +1154,7 @@ int msr_serialize_raw_data(struct msr_driver_t* handle, const char* filename);
 int cpu_msr_driver_close(struct msr_driver_t* handle);
 
 #ifdef __cplusplus
-}; /* extern "C" */
+} /* extern "C" */
 #endif
 
 

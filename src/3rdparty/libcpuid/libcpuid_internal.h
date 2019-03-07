@@ -70,6 +70,9 @@ enum _common_bits_t
 	_M_                     = LBIT(0),
 	MOBILE_                 = LBIT(1),
 	_MP_                    = LBIT(2),
+	_3                      = LBIT(3),
+	_5                      = LBIT(4),
+	_7                      = LBIT(5),
 };
 
 // additional detection bits for Intel CPUs:
@@ -79,11 +82,9 @@ enum _intel_bits_t
 	CELERON_                = LBIT(11),
 	CORE_                   = LBIT(12),
 	_I_                     = LBIT(13),
-	_3                      = LBIT(14),
-	_5                      = LBIT(15),
-	_7                      = LBIT(16),
-	XEON_                   = LBIT(17),
-	ATOM_                   = LBIT(18),
+	_9                      = LBIT(14),
+	XEON_                   = LBIT(15),
+	ATOM_                   = LBIT(16),
 };
 typedef enum _intel_bits_t intel_bits_t;
 
@@ -95,14 +96,17 @@ enum _amd_bits_t
 	SEMPRON_     = LBIT(13),
 	OPTERON_     = LBIT(14),
 	TURION_      = LBIT(15),
-	_LV_         = LBIT(16),
-	_64_         = LBIT(17),
-	_X2          = LBIT(18),
-	_X3          = LBIT(19),
-	_X4          = LBIT(20),
-	_X6          = LBIT(21),
-	_FX          = LBIT(22),
-	_APU_        = LBIT(23),
+	RYZEN_       = LBIT(16),
+	RYZEN_TR_    = LBIT(17),
+	EPYC_        = LBIT(18),
+	_LV_         = LBIT(19),
+	_64_         = LBIT(20),
+	_X2          = LBIT(21),
+	_X3          = LBIT(22),
+	_X4          = LBIT(23),
+	_X6          = LBIT(24),
+	_FX          = LBIT(25),
+	_APU_        = LBIT(26),
 };
 typedef enum _amd_bits_t amd_bits_t;
 

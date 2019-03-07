@@ -33,6 +33,8 @@
 #include "libcpuid_internal.h"
 #include "rdtsc.h"
 
+#define MSR_PATH_LEN 32
+
 #if defined (__linux__) || defined (__gnu_linux__)
 /* Assuming linux with /dev/cpu/x/msr: */
 #include <unistd.h>
@@ -76,7 +78,7 @@ struct msr_driver_t* cpu_msr_driver_open(void)
 
 struct msr_driver_t* cpu_msr_driver_open_core(unsigned core_num)
 {
-	char msr[32];
+	char msr[MSR_PATH_LEN];
 	struct msr_driver_t* handle;
 	if(core_num >= cpuid_get_total_cpus())
 	{
@@ -88,7 +90,7 @@ struct msr_driver_t* cpu_msr_driver_open_core(unsigned core_num)
 		set_error(ERR_NO_RDMSR);
 		return NULL;
 	}
-	sprintf(msr, "/dev/cpu/%u/msr", core_num);
+	snprintf(msr, MSR_PATH_LEN, "/dev/cpu/%u/msr", core_num);
 	if(!load_driver(msr))
 	{
 		set_error(ERR_NO_DRIVER);
@@ -181,7 +183,7 @@ struct msr_driver_t* cpu_msr_driver_open(void)
 
 struct msr_driver_t* cpu_msr_driver_open_core(unsigned core_num)
 {
-	char msr[32];
+	char msr[MSR_PATH_LEN];
 	struct msr_driver_t* handle;
 	if(core_num >= cpuid_get_total_cpus())
 	{
@@ -193,7 +195,7 @@ struct msr_driver_t* cpu_msr_driver_open_core(unsigned core_num)
 		set_error(ERR_NO_RDMSR);
 		return NULL;
 	}
-	sprintf(msr, "/dev/cpuctl%u", core_num);
+	snprintf(msr, MSR_PATH_LEN, "/dev/cpuctl%u", core_num);
 	if(!load_driver(msr))
 	{
 		set_error(ERR_NO_DRIVER);
@@ -849,7 +851,7 @@ static int get_amd_multipliers(struct msr_info_t* info, uint32_t pstate, double*
 		Note: This family contains only APUs */
 		err  = cpu_rdmsr_range(info->handle, pstate, 8, 6, &CpuDid);
 		err += cpu_rdmsr_range(info->handle, pstate, 5, 0, &CpuFid);
-		*multiplier = (double)((CpuFid + magic_constant) / (1ull << CpuDid)) / divisor;
+		*multiplier = ((double)(CpuFid + magic_constant) / (1ull << CpuDid)) / divisor;
 		break;
 	case 0x17:
 		/* PPR 17h, pages 30 and 138-139
@@ -858,7 +860,7 @@ static int get_amd_multipliers(struct msr_info_t* info, uint32_t pstate, double*
 		CoreCOF is (Core::X86::Msr::PStateDef[CpuFid[7:0]] / Core::X86::Msr::PStateDef[CpuDfsId]) * 200 */
 		err  = cpu_rdmsr_range(info->handle, pstate, 13, 8, &CpuDid);
 		err += cpu_rdmsr_range(info->handle, pstate,  7, 0, &CpuFid);
-		*multiplier = (double)(CpuFid / CpuDid) * 2;
+		*multiplier = ((double) CpuFid / CpuDid) * 2;
 		break;
 	default:
 		err = 1;
@@ -1238,7 +1240,7 @@ int msr_serialize_raw_data(struct msr_driver_t* handle, const char* filename)
 		return set_error(ERR_HANDLE);
 	}
 
-	if(!strcmp(filename, ""))
+	if((filename == NULL) || !strcmp(filename, ""))
 	{
 		f = stdout;
 	}
@@ -1257,16 +1259,15 @@ int msr_serialize_raw_data(struct msr_driver_t* handle, const char* filename)
 	}
 
 	fprintf(f, "CPU is %s %s, stock clock is %dMHz.\n", id.vendor_str, id.brand_str, cpu_clock_measure(250, 1));
-	if(id.vendor == VENDOR_INTEL)
+	switch(id.vendor)
 	{
-		msr = intel_msr;
-	}
-	else if(id.vendor == VENDOR_AMD)
-	{
+	case VENDOR_AMD:
 		msr = amd_msr;
-	}
-	else
-	{
+		break;
+	case VENDOR_INTEL:
+		msr = intel_msr;
+		break;
+	default:
 		return set_error(ERR_CPU_UNKN);
 	}
 
@@ -1278,10 +1279,10 @@ int msr_serialize_raw_data(struct msr_driver_t* handle, const char* filename)
 		{
 			fprintf(f, "%02x ", (int)(reg >> j) & 0xff);
 		}
-		printf("\n");
+		fprintf(f, "\n");
 	}
 
-	if(strcmp(filename, ""))
+	if((filename != NULL) && strcmp(filename, ""))
 	{
 		fclose(f);
 	}
