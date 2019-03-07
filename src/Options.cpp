@@ -827,15 +827,16 @@ bool Options::parseBoolean(int key, bool enable)
 		m_pools.back().setNicehash(enable);
 		break;
 
-#ifndef XMRIG_NO_SSL
 	case 1088: /* --ssl */
+#ifdef XMRIG_NO_SSL
+		if(enable == true)
+		{
+			fprintf(stderr, "SSL is not supported.\n");
+			return false;
+		}
+#endif
 		m_pools.back().setSsl(enable);
 		break;
-#else
-	case 1188: /* --ssl*/
-		fprintf(stderr, "SSL is not supported.\n");
-		return false;
-#endif
 
 #ifndef XMRIG_NO_UDP
 	case 1089: /* --udp */
