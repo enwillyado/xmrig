@@ -339,7 +339,7 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(SolutionDir)\..\..\libuv-1.x\Release\$(Platform)\lib;$(SolutionDir)\..\..\openssl\$(Platform)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\..\libuv-1.x\Debug\$(Platform)\lib;$(SolutionDir)\..\..\openssl\$(Platform)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>libuv.lib;libcrypto.lib;libssl.lib;advapi32.lib;iphlpapi.lib;psapi.lib;shell32.lib;user32.lib;userenv.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>LIBCMTD;LIBCMT</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -347,7 +347,7 @@
       <AssemblyDebug>true</AssemblyDebug>
       <ProgramDatabaseFile>$(ProjectName)$(Platform)d.pdb</ProgramDatabaseFile>
       <MapExports>true</MapExports>
-      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='vc-release|x64'">
@@ -413,7 +413,7 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(SolutionDir)\..\..\libuv-1.x\Release\$(Platform)\lib;$(SolutionDir)\..\..\openssl\$(Platform)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\..\libuv-1.x\Debug\$(Platform)\lib;$(SolutionDir)\..\..\openssl\$(Platform)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBCMTD;LIBCMT</IgnoreSpecificDefaultLibraries>
       <AdditionalDependencies>libuv.lib;libcrypto.lib;libssl.lib;advapi32.lib;iphlpapi.lib;psapi.lib;shell32.lib;user32.lib;userenv.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(ProjectName)$(Platform)d.pdb</ProgramDatabaseFile>
@@ -421,7 +421,7 @@
       <GenerateMapFile>true</GenerateMapFile>
       <MapExports>true</MapExports>
       <AssemblyDebug>true</AssemblyDebug>
-      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='vc-release|Win32'">
