@@ -836,7 +836,7 @@ bool Options::parseBoolean(int key, bool enable)
 		}
 		else
 		{
-			m_pools.back().setSsl<false>();
+			m_pools.back().setSslFalse();
 		}
 #else
 		m_pools.back().setSsl(enable);
