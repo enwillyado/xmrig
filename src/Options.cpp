@@ -139,11 +139,7 @@ static struct option const options[] =
 	{ "log-file",          required_argument, nullptr, 'l'  },
 	{ "max-cpu-usage",     required_argument, nullptr, 1004 },
 	{ "nicehash",          no_argument,       nullptr, 1006 },
-#ifndef XMRIG_NO_SSL
 	{ "ssl",               no_argument,       nullptr, 1088 },
-#else
-	{ "ssl",               no_argument,       nullptr, 1188 },
-#endif
 #ifndef XMRIG_NO_UDP
 	{ "udp",               no_argument,       nullptr, 1089 },
 	{ "udp-blind",         required_argument, nullptr, 1090 },
@@ -244,11 +240,7 @@ static struct option const pool_options[] =
 	{ "keepalive",     no_argument,       nullptr, 'k'  },
 	{ "variant",       required_argument, nullptr, 1010 },
 	{ "nicehash",      no_argument,       nullptr, 1006 },
-#ifndef XMRIG_NO_SSL
 	{ "ssl",           no_argument,       nullptr, 1088 },
-#else
-	{ "ssl",           no_argument,       nullptr, 1188 },
-#endif
 #ifndef XMRIG_NO_UDP
 	{ "udp",           no_argument,       nullptr, 1089 },
 	{ "udp-blind",     required_argument, nullptr, 1090 },
@@ -527,11 +519,7 @@ bool Options::parseArg(int key, const std::string & arg)
 	case 'S':  /* --syslog */
 	case 1005: /* --safe */
 	case 1006: /* --nicehash */
-#ifndef XMRIG_NO_SSL
 	case 1088: /* --ssl*/
-#else
-	case 1188: /* --ssl*/
-#endif
 #ifndef XMRIG_NO_UDP
 	case 1089: /* --udp*/
 #else

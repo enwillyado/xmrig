@@ -17,6 +17,14 @@
       <Configuration>vc-debug</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="vc-releasex-noSSL|Win32">
+      <Configuration>vc-releasex-noSSL</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="vc-releasex-noSSL|x64">
+      <Configuration>vc-releasex-noSSL</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="vc-releasex|Win32">
       <Configuration>vc-releasex</Configuration>
       <Platform>Win32</Platform>
@@ -39,6 +47,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='vc-debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='vc-release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='vc-releasex|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='vc-releasex-noSSL|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='make|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='make|x64'">true</ExcludedFromBuild>
     </MASM>
@@ -261,12 +270,15 @@
     <OutDir Condition="'$(Configuration)|$(Platform)'=='vc-debug|x64'">$(SolutionDir)\..\build\</OutDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='vc-release|x64'">$(SolutionDir)\..\build\</OutDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='vc-releasex|x64'">$(SolutionDir)\..\build\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='vc-releasex-noSSL|x64'">$(SolutionDir)\..\build\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='vc-debug|x64'">$(SolutionDir)\obj\$(Platform)\$(Configuration)\</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='vc-release|x64'">$(SolutionDir)\obj\$(Platform)\$(Configuration)\</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='vc-releasex|x64'">$(SolutionDir)\obj\$(Platform)\$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='vc-releasex-noSSL|x64'">$(SolutionDir)\obj\$(Platform)\$(Configuration)\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='vc-debug|x64'">$(ProjectName)-x$(PlatformArchitecture)d</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='vc-release|x64'">$(ProjectName)-x$(PlatformArchitecture)</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='vc-releasex|x64'">$(ProjectName)-x$(PlatformArchitecture)x</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='vc-releasex-noSSL|x64'">$(ProjectName)-noSSL_x$(PlatformArchitecture)x</TargetName>
     <NMakeBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='make|Win32'">cd $(OutDir) &amp;&amp; make -j$(NUMBER_OF_PROCESSORS)</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='make|Win32'">cd $(OutDir) &amp;&amp; make clean &amp;&amp; make -j$(NUMBER_OF_PROCESSORS)</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine Condition="'$(Configuration)|$(Platform)'=='make|Win32'">cd $(OutDir) &amp;&amp; make clean</NMakeCleanCommandLine>
@@ -278,10 +290,13 @@
     <TargetName Condition="'$(Configuration)|$(Platform)'=='vc-debug|Win32'">$(ProjectName)-x$(PlatformArchitecture)d</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='vc-release|Win32'">$(ProjectName)-x$(PlatformArchitecture)</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='vc-releasex|Win32'">$(ProjectName)-x$(PlatformArchitecture)x</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='vc-releasex-noSSL|Win32'">$(ProjectName)-noSSL_x$(PlatformArchitecture)x</TargetName>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='vc-release|Win32'">$(SolutionDir)\obj\$(Platform)\$(Configuration)\</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='vc-releasex|Win32'">$(SolutionDir)\obj\$(Platform)\$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='vc-releasex-noSSL|Win32'">$(SolutionDir)\obj\$(Platform)\$(Configuration)\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='vc-release|Win32'">$(SolutionDir)\..\build\</OutDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='vc-releasex|Win32'">$(SolutionDir)\..\build\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='vc-releasex-noSSL|Win32'">$(SolutionDir)\..\build\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='make|Win32'">
     <ClCompile>
@@ -324,6 +339,11 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='vc-releasex|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\src\;$(SolutionDir)\..\src\3rdparty;$(SolutionDir)\..\src\3rdparty\libcpuid;$(SolutionDir)\..\src\3rdparty\rapidjson\msinttypes;$(SolutionDir)\..\..\libuv-1.x\include;$(SolutionDir)\..\..\openssl\$(Platform)\include</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='vc-releasex-noSSL|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\src\;$(SolutionDir)\..\src\3rdparty;$(SolutionDir)\..\src\3rdparty\libcpuid;$(SolutionDir)\..\src\3rdparty\rapidjson\msinttypes;$(SolutionDir)\..\..\libuv-1.x\include;$(SolutionDir)\..\..\openssl\$(Platform)\include</AdditionalIncludeDirectories>
     </ClCompile>
@@ -379,6 +399,33 @@
     <ClCompile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PreprocessorDefinitions>XMRIG_NO_HTTPD;XMRIG_NO_GOOGLE_BREAKPAD;XMRIG_NO_API;XMRIG_NO_AEON;__STDC_FORMAT_MACROS</PreprocessorDefinitions>
+      <Optimization>Full</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\..\libuv-1.x\Release\$(Platform)\lib;$(SolutionDir)\..\..\openssl\$(Platform)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libuv.lib;libcrypto.lib;libssl.lib;advapi32.lib;iphlpapi.lib;psapi.lib;shell32.lib;user32.lib;userenv.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>LIBCMTD;LIBCMT</IgnoreSpecificDefaultLibraries>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='vc-releasex-noSSL|x64'">
+    <ClCompile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <PreprocessorDefinitions>XMRIG_NO_HTTPD;XMRIG_NO_GOOGLE_BREAKPAD;XMRIG_NO_API;XMRIG_NO_AEON;XMRIG_NO_SSL;__STDC_FORMAT_MACROS</PreprocessorDefinitions>
       <Optimization>Full</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -462,6 +509,34 @@
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <PreprocessorDefinitions>XMRIG_NO_HTTPD;XMRIG_NO_GOOGLE_BREAKPAD;XMRIG_NO_API;XMRIG_NO_AEON;__STDC_FORMAT_MACROS</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\..\libuv-1.x\Release\$(Platform)\lib;$(SolutionDir)\..\..\openssl\$(Platform)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libuv.lib;libcrypto.lib;libssl.lib;advapi32.lib;iphlpapi.lib;psapi.lib;shell32.lib;user32.lib;userenv.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>LIBCMTD;LIBCMT</IgnoreSpecificDefaultLibraries>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='vc-releasex-noSSL|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\src\;$(SolutionDir)\..\src\3rdparty;$(SolutionDir)\..\src\3rdparty\libcpuid;$(SolutionDir)\..\src\3rdparty\rapidjson\msinttypes;$(SolutionDir)\..\..\libuv-1.x\include;$(SolutionDir)\..\..\openssl\$(Platform)\include</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>Full</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <PreprocessorDefinitions>XMRIG_NO_HTTPD;XMRIG_NO_GOOGLE_BREAKPAD;XMRIG_NO_API;XMRIG_NO_AEON;XMRIG_NO_SSL;__STDC_FORMAT_MACROS</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>

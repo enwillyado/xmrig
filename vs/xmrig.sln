@@ -13,6 +13,8 @@ Global
 		vc-release|x64 = vc-release|x64
 		vc-releasex|Win32 = vc-releasex|Win32
 		vc-releasex|x64 = vc-releasex|x64
+		vc-releasex-noSSL|Win32 = vc-releasex-noSSL|Win32
+		vc-releasex-noSSL|x64 = vc-releasex-noSSL|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{92BDBA37-96E3-4D85-B762-185E4407BB49}.make|Win32.ActiveCfg = make|Win32
@@ -31,6 +33,10 @@ Global
 		{92BDBA37-96E3-4D85-B762-185E4407BB49}.vc-releasex|Win32.Build.0 = vc-releasex|Win32
 		{92BDBA37-96E3-4D85-B762-185E4407BB49}.vc-releasex|x64.ActiveCfg = vc-releasex|x64
 		{92BDBA37-96E3-4D85-B762-185E4407BB49}.vc-releasex|x64.Build.0 = vc-releasex|x64
+		{92BDBA37-96E3-4D85-B762-185E4407BB49}.vc-releasex-noSSL|Win32.ActiveCfg = vc-releasex-noSSL|Win32
+		{92BDBA37-96E3-4D85-B762-185E4407BB49}.vc-releasex-noSSL|Win32.Build.0 = vc-releasex-noSSL|Win32
+		{92BDBA37-96E3-4D85-B762-185E4407BB49}.vc-releasex-noSSL|x64.ActiveCfg = vc-releasex-noSSL|x64
+		{92BDBA37-96E3-4D85-B762-185E4407BB49}.vc-releasex-noSSL|x64.Build.0 = vc-releasex-noSSL|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
